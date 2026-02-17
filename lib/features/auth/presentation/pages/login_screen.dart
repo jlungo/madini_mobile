@@ -58,7 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
                 const SizedBox(height: 48),
-                if (authProvider.status == AuthStatus.failure)
+                if (authProvider.status == AuthStatus.error)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16.0),
                     child: Text(
@@ -99,13 +99,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: authProvider.status == AuthStatus.loading
+                  onPressed: authProvider.status == AuthStatus.authenticating
                       ? null
                       : _submit,
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: authProvider.status == AuthStatus.loading
+                  child: authProvider.status == AuthStatus.authenticating
                       ? const SizedBox(
                           height: 20,
                           width: 20,

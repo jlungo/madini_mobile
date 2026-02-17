@@ -1,3 +1,4 @@
+import '../../../../core/security/permission_resolver.dart';
 import '../../domain/entities/user.dart';
 
 class UserModel extends User {
@@ -12,19 +13,24 @@ class UserModel extends User {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
-    // Note: Adjust according to actual Keycloak token structure or userinfo endpoint
-    // This assumes a standard OIDC userinfo or ID token payload, PLUS custom claims for permissions
-    
+    final roles = (json['realm_access']?['roles'] as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        [];
+    final fromToken =
+        (json['permissions'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
+    final permissions = PermissionResolver.resolve(
+      roles: roles,
+      permissionsFromToken: fromToken,
+    );
     return UserModel(
       id: json['sub'] ?? '',
       username: json['preferred_username'] ?? '',
       email: json['email'] ?? '',
       firstName: json['given_name'] ?? '',
       lastName: json['family_name'] ?? '',
-      roles: (json['realm_access']?['roles'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
-      // Assuming permissions are passed in a custom claim, commonly in 'resource_access' or a simplified 'permissions' claim
-      // For now, we'll assume a flat list given the web app's simplicity in 'auth.ts'
-      permissions: (json['permissions'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
+      roles: roles,
+      permissions: permissions,
     );
   }
 

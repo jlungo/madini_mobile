@@ -1,13 +1,15 @@
 import 'package:flutter/foundation.dart';
+import '../../domain/entities/permission.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
 
 enum AuthStatus {
   initial,
-  authenticated,
   unauthenticated,
-  loading,
-  failure,
+  authenticating,
+  authenticated,
+  sessionExpired,
+  error,
 }
 
 class AuthProvider extends ChangeNotifier {
@@ -22,11 +24,24 @@ class AuthProvider extends ChangeNotifier {
   AuthStatus get status => _status;
   User? get user => _user;
   String? get errorMessage => _errorMessage;
-
   bool get isAuthenticated => _status == AuthStatus.authenticated;
 
+  /// Plan §5: read-only selectors.
+  User? get currentUser => _user;
+
+  bool hasPermission(Permission permission) =>
+      _user?.hasPermission(permission.raw) ?? false;
+
+  bool hasAny(Iterable<Permission> permissions) =>
+      _user != null &&
+      permissions.any((p) => _user!.hasPermission(p.raw));
+
+  bool hasAll(Iterable<Permission> permissions) =>
+      _user != null &&
+      permissions.every((p) => _user!.hasPermission(p.raw));
+
   Future<void> login(String email, String password) async {
-    _status = AuthStatus.loading;
+    _status = AuthStatus.authenticating;
     _errorMessage = null;
     notifyListeners();
 
@@ -34,7 +49,7 @@ class AuthProvider extends ChangeNotifier {
 
     result.fold(
       (failure) {
-        _status = AuthStatus.failure;
+        _status = AuthStatus.error;
         _errorMessage = failure;
         notifyListeners();
       },
@@ -54,22 +69,26 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> checkAuthStatus() async {
-    debugPrint('[AuthProvider] checkAuthStatus started');
     try {
       final user = await _authRepository.getCurrentUser();
-      debugPrint('[AuthProvider] getCurrentUser returned: ${user?.email}');
       if (user != null) {
         _user = user;
         _status = AuthStatus.authenticated;
       } else {
-        _status = AuthStatus.unauthenticated;
+        final token = await _authRepository.getAccessToken();
+        if (token != null && token.isNotEmpty) {
+          _status = AuthStatus.sessionExpired;
+          _errorMessage = 'Session expired';
+          await _authRepository.logout();
+          _user = null;
+        } else {
+          _status = AuthStatus.unauthenticated;
+        }
       }
-    } catch (e) {
-      debugPrint('[AuthProvider] Error in checkAuthStatus: $e');
-      _status = AuthStatus.failure;
-      _errorMessage = e.toString();
+    } catch (_) {
+      _status = AuthStatus.error;
+      _errorMessage = 'Failed to restore session';
     }
-    debugPrint('[AuthProvider] checkAuthStatus finished with status: $_status');
     notifyListeners();
   }
 }
