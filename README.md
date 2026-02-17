@@ -1,95 +1,103 @@
 # Madini Mobile
 
-Madini Mobile is a Flutter client that mirrors the NGMRIS portal modules for mobile devices. The current implementation focuses on:
+Madini Mobile is a Flutter client that mirrors the NGMRIS portal modules for mobile devices.
 
-- Dashboard-style module switchboard (Dashboard, Data Shop, Geoscientific Survey, Laboratory)
-- Data Shop dashboard cards and tables
-- Geoscientific Survey mapping activity listing and create‑activity flow
+The current implementation focuses on:
 
-All UI is built directly in Flutter and reuses design tokens from the web portal
-(theme colors and typography).
+- **Secure Authentication** – Integration with Keycloak using JWT decoding and secure token storage.
+- **Role-Based Access Control (RBAC)** – Permission guards that restrict dashboard access based on user roles (Admin, Miner, Officer, etc.).
+- **Module Switchboard** – Dashboard-style navigation for Dashboard, Data Shop, Geoscientific Survey, and Laboratory.
+- **Data Shop** – Interactive dashboard cards and tables for sales and inventory.
+- **Geoscientific Survey** – Mapping activity listing and structured create-activity flow.
+- **Design Consistency** – Reuses design tokens (colors/typography) from the NGMRIS web portal for a unified experience.
+
+---
 
 ## Application structure
 
-The main package entry point is:
+The main package entry points are:
 
-- `lib/main.dart` – boots the Flutter app and runs `MadiniApp`.
+- `lib/main.dart` – boots the Flutter app.
+- `lib/providers.dart` – centralized dependency injection and provider setup.
 
-High‑level structure under `lib/`:
+### High-level structure under `lib/`
 
-- `core/`
-  - `app.dart` – wraps the app with `ThemeProvider` and exposes `MaterialApp.router`.
-  - `config/`
-    - `app_config.dart` – immutable `AppConfig` with environment (`dev`, `staging`, `prod`), API base URL and auth base URL. The default config (`kDefaultAppConfig`) is set to a development environment.
-    - `module_config.dart` – static list of module definitions (id, title, description, route, icon) used by the home switchboard.
-    - `router_config.dart` – central `GoRouter` configuration (splash screen, home switchboard, dashboard, data shop, geoscientific survey listing, and create‑mapping routes).
-  - `network/`
-    - `api_client.dart` – centralized `Dio` HTTP client configured with `AppConfig` (`apiBaseUrl`, timeouts, JSON headers) and an `ApiInterceptor`.
-    - `api_interceptor.dart` – interceptor that attaches a bearer token from `StorageService` to outgoing requests and provides hooks for global response/error handling.
-  - `theme/`
-    - `app_theme.dart` – light and dark `ThemeData` definitions, using Plus Jakarta Sans via `google_fonts` and a color scheme that matches the NGMRIS web palette.
+#### `core/`
 
-- `features/`
-  - `home/presentation/`
-    - `pages/switchboard_page.dart` – landing dashboard showing one large card per module (Dashboard, Data Shop, Geoscientific Survey, Laboratory).
-    - `widgets/module_card.dart` – reusable card widget with centered icon, title, and description, wired to navigate via `go_router`.
-  - `dashboard/presentation/`
-    - `pages/dashboard_page.dart` – example analytics dashboard using tabs and statistic cards.
-    - `widgets/stat_card.dart` – small metric card component used by the dashboard.
-  - `datashop/presentation/`
-    - `pages/datashop_page.dart` – implements the Data Shop dashboard: metric cards (Total Sales, Active Materials, Total Orders, New Customers) plus “Recent Orders” and “Popular Materials” tables.
-  - `geoscientific_survey/presentation/`
-    - `pages/geoscientific_mapping_list_page.dart` – “Mapping Activity” listing: breadcrumb, heading + description, search field, mapping table (Activity Name, Type, Survey Type, Location) with chips for “Internal”/“Consultancy”, and a footer with paging controls.
-    - `pages/geoscientific_mapping_create_page.dart` – modal‑style “Create New Mapping Activity” form with fields for activity name, type, survey type, location, lead scientist, and created date, plus Create/Cancel actions.
+- `app.dart` – root widget that manages global state (Theme, Routing) and exposes `MaterialApp.router`.
+- `config/`
+  - `app_config.dart` – environment configurations and API base URLs.
+  - `router_config.dart` – stable `GoRouter` configuration with unified navigation and splash handling.
+- `network/`
+  - `api_client.dart` – `Dio` HTTP client with automated token attachment via `ApiInterceptor`.
+- `theme/`
+  - `app_theme.dart` – coordinated Light and Dark themes matching the NGMRIS web palette.
 
-- `shared/widgets/`
-  - `app_scaffold.dart` – common scaffold with an NGMRIS‑style portal header (title, theme toggle, avatar) and optional plain header mode.
-  - `app_card.dart` – base card component (rounded corners and subtle border) used for metric cards, tables, and search fields.
-  - `app_button.dart` – button wrapper with variants (primary, secondary, outline, destructive, ghost, link) and optional full‑width behavior.
-  - `app_input.dart` – text form field wrapper with label, hint, prefix/suffix icons, and basic validation hooks.
+---
 
-- `services/`
-  - `storage_service.dart` – singleton wrapper around `FlutterSecureStorage` for persisting access and refresh tokens (read, write, clear).
+#### `features/`
 
-- `state/`
-  - `theme_provider.dart` – `ChangeNotifier` that manages the current `ThemeMode` and exposes helpers for accessing the light/dark themes.
+- `auth/` – Authentication sub-system following Clean Architecture:
+  - `data/` – Remote data sources and repository implementations for Keycloak.
+  - `domain/` – Core `User` entity and repository interfaces.
+  - `presentation/` – `AuthProvider` for login/logout state management and authentication UI pages.
+- `home/presentation/` – landing dashboard (Switchboard) for module navigation.
+- `datashop/presentation/` – Data Shop metrics and inventory tables.
+- `geoscientific_survey/presentation/` – Listing and creation flows for mapping activities.
+
+---
+
+#### `shared/widgets/`
+
+- `permission_guard.dart` – Security widget for restricting UI access based on user roles.
+- `app_scaffold.dart` – Standard layout with portal header, theme toggle, and user avatar.
+- `app_button.dart`, `app_card.dart`, `app_input.dart` – Reusable design system components.
+
+---
+
+#### `services/`
+
+- `storage_service.dart` – Secure persistence for JWT tokens using `FlutterSecureStorage`.
+
+---
+
+#### `state/`
+
+- `theme_provider.dart` – Runtime theme mode management (Light/Dark).
+
+---
 
 ## Architecture overview
 
-- **Feature‑first layout** – Screens and widgets are grouped by feature
-  (`home`, `dashboard`, `datashop`, `geoscientific_survey`) under
-  `features/<feature>/presentation/`.
-- **Core shared modules** – Cross‑cutting concerns (routing, theme, network
-  client, global configuration) live under `core/`.
-- **Shared UI components** – Reusable visual primitives (`AppScaffold`,
-  `AppCard`, `AppButton`, `AppInput`) live under `shared/widgets/` and are
-  used across features to keep the look‑and‑feel consistent.
-- **Networking & storage** – All HTTP traffic goes through `ApiClient`
-  (`Dio`) with `ApiInterceptor` attaching bearer tokens fetched from
-  `StorageService` (`FlutterSecureStorage`).
-- **Navigation** – `GoRouter` is the single source of truth for routes. The
-  route names and paths mirror the modules defined in `module_config.dart`.
-- **Theming** – `MadiniApp` wraps the router with a `ThemeProvider`. The
-  `AppScaffold` header exposes a theme toggle that flips between light and
-  dark themes at runtime.
+- **Clean Architecture Principles** – Features (such as authentication) are decoupled into Data, Domain, and Presentation layers to ensure separation of concerns and testability.
+- **State Management** – Uses the `provider` package for reactive UI updates and dependency injection.
+- **Stabilized Navigation** – `GoRouter` is configured as a persistent provider to prevent splash-screen hangs and navigation resets during app rebuilds.
+- **JWT & Role Management** – The app decodes JWT claims locally from Keycloak tokens to determine user identity and permissions without redundant API calls.
+- **Functional Error Handling** – Uses the `dartz` package (`Either`) to handle successes and failures explicitly in the repository layer.
+- **Storage Security** – Sensitive tokens are stored in the device's secure enclave via `FlutterSecureStorage`.
+
+---
 
 ## Technologies used
 
-- **Flutter** – UI framework for building the mobile app.
-- **Dart packages**
-  - `provider` – used for app‑wide theme state in `ThemeProvider`.
-  - `go_router` – declarative routing (`appRouter` in `core/config/router_config.dart`).
-  - `dio` – HTTP client used in `ApiClient` with `ApiInterceptor`.
-  - `flutter_secure_storage` – secure token storage used by `StorageService`.
-  - `google_fonts` – Plus Jakarta Sans text theme in `AppTheme`.
-  - `cupertino_icons` – standard iOS icon set (available for use in UI).
-  - `shared_preferences` – declared as a dependency and available for simple key‑value storage if needed.
+- **Flutter** – UI framework.
+
+### Dart packages
+
+- `provider` – state management and dependency injection.
+- `go_router` – declarative routing and deep linking.
+- `dio` – networking with interceptors for authentication.
+- `dartz` – functional programming types (`Either`) for clean error handling.
+- `flutter_secure_storage` – encrypted local storage.
+- `google_fonts` – Plus Jakarta Sans integration.
+- `cupertino_icons` – UI iconography.
+
+---
 
 ## Running the app
 
-This is a standard Flutter project. To run it:
+Ensure you have an emulator or physical device connected:
 
 ```bash
 flutter pub get
 flutter run
-```
