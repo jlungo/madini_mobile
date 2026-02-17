@@ -21,8 +21,7 @@ class GeoscientificMappingListPage extends StatelessWidget {
             Text(
               'Geoscientific Survey  >  Mapping activity',
               style: theme.textTheme.bodySmall?.copyWith(
-                color:
-                    theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 8),
@@ -36,8 +35,7 @@ class GeoscientificMappingListPage extends StatelessWidget {
             Text(
               'Manage field mapping and data collection activities for\nmineral exploration',
               style: theme.textTheme.bodyMedium?.copyWith(
-                color:
-                    theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
             ),
             const SizedBox(height: 16),
@@ -65,8 +63,7 @@ class GeoscientificMappingListPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             AppCard(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: TextField(
                 decoration: InputDecoration(
                   border: InputBorder.none,
@@ -77,10 +74,7 @@ class GeoscientificMappingListPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: AppCard(
-                padding: EdgeInsets.zero,
-                child: _MappingTable(),
-              ),
+              child: AppCard(padding: EdgeInsets.zero, child: _MappingTable()),
             ),
             const SizedBox(height: 8),
             const _TableFooter(),
@@ -143,7 +137,7 @@ class _MappingTable extends StatelessWidget {
     ),
   ];
 
-  _MappingTable({super.key});
+  const _MappingTable();
 
   @override
   Widget build(BuildContext context) {
@@ -287,10 +281,7 @@ class _TableFooter extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Text(
-                '10',
-                style: theme.textTheme.bodySmall,
-              ),
+              Text('10', style: theme.textTheme.bodySmall),
               const Icon(Icons.arrow_drop_down, size: 18),
             ],
           ),
@@ -320,4 +311,3 @@ class _TableFooter extends StatelessWidget {
     );
   }
 }
-

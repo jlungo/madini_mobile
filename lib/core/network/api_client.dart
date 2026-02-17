@@ -7,7 +7,9 @@ import 'api_interceptor.dart';
 class ApiClient {
   late final Dio _dio;
 
-  ApiClient({AppConfig config = kDefaultAppConfig}) {
+  ApiClient({
+    AppConfig config = kDefaultAppConfig,
+  }) {
     _dio = Dio(
       BaseOptions(
         baseUrl: config.apiBaseUrl,
@@ -20,6 +22,7 @@ class ApiClient {
       ),
     );
 
+    // Add Logging/Base Interceptor
     _dio.interceptors.add(ApiInterceptor());
   }
 
@@ -81,4 +84,3 @@ class ApiClient {
     );
   }
 }
-

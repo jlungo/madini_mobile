@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-
+import 'package:provider/provider.dart';
 import '../../../../core/config/module_config.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../shared/widgets/permission_guard.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../widgets/module_card.dart';
 
 /// Landing dashboard showing the four main NGMRIS modules,
@@ -12,6 +14,12 @@ class SwitchboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.logout),
+          onPressed: () => context.read<AuthProvider>().logout(),
+        ),
+      ],
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView.separated(
@@ -19,6 +27,15 @@ class SwitchboardPage extends StatelessWidget {
           separatorBuilder: (_, __) => const SizedBox(height: 16),
           itemBuilder: (context, index) {
             final module = kModules[index];
+            
+            // Example of using PermissionGuard for specific modules
+            if (module.id == 'laboratory') {
+              return PermissionGuard.single(
+                permission: 'lab:view',
+                child: ModuleCard(module: module),
+              );
+            }
+            
             return ModuleCard(module: module);
           },
         ),

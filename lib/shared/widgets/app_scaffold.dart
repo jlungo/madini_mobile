@@ -18,12 +18,16 @@ class AppScaffold extends StatelessWidget {
   /// When false, uses [title] directly and hides portal header actions.
   final bool usePortalHeader;
 
+  /// Optional actions for the AppBar.
+  final List<Widget>? actions;
+
   const AppScaffold({
     super.key,
     this.title,
     required this.body,
     this.floatingActionButton,
     this.usePortalHeader = true,
+    this.actions,
   });
 
   @override
@@ -71,8 +75,9 @@ class AppScaffold extends StatelessWidget {
                     ),
                   ),
                 ),
+                ...?actions,
               ]
-            : null,
+            : actions,
       ),
       body: SafeArea(child: body),
       floatingActionButton: floatingActionButton,

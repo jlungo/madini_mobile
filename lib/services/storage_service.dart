@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
 
 /// Wraps [FlutterSecureStorage] for auth tokens and other secrets.
 class StorageService {
@@ -21,8 +23,16 @@ class StorageService {
     }
   }
 
-  Future<String?> readAccessToken() {
-    return _storage.read(key: _keyAccessToken);
+  Future<String?> readAccessToken() async {
+    debugPrint('[Storage] readAccessToken started');
+    try {
+      final value = await _storage.read(key: _keyAccessToken);
+      debugPrint('[Storage] readAccessToken finished: ${value != null ? 'TOKEN_PRESENT' : 'NULL'}');
+      return value;
+    } catch (e) {
+      debugPrint('[Storage] readAccessToken error: $e');
+      rethrow;
+    }
   }
 
   Future<String?> readRefreshToken() {
