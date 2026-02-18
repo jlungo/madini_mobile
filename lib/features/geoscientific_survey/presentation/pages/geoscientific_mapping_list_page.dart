@@ -101,7 +101,11 @@ class _GeoscientificMappingListPageState
         builder: (context, ctrl, _) {
           final filtered = _filter(ctrl.activities, _searchQuery);
 
-          return Padding(
+          // SizedBox.expand ensures Column + Expanded always have tight height
+          // constraints whether this content is used inside AppScaffold or
+          // directly as a ShellRoute child.
+          return SizedBox.expand(
+            child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -235,7 +239,7 @@ class _GeoscientificMappingListPageState
                 ),
               ],
             ),
-          );
+          ));
         },
       );
   }

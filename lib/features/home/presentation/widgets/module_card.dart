@@ -8,17 +8,16 @@ import '../../../../shared/widgets/app_card.dart';
 class ModuleCard extends StatelessWidget {
   final ModuleConfig module;
 
-  const ModuleCard({
-    super.key,
-    required this.module,
-  });
+  const ModuleCard({super.key, required this.module});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final onCard = theme.extension<AppThemeExtension>()?.onCard ??
+    final onCard =
+        theme.extension<AppThemeExtension>()?.onCard ??
         theme.colorScheme.onSurface;
-    final onCardMuted = theme.extension<AppThemeExtension>()?.onCardMuted ??
+    final onCardMuted =
+        theme.extension<AppThemeExtension>()?.onCardMuted ??
         theme.colorScheme.onSurface.withValues(alpha: 0.7);
 
     return InkWell(
@@ -30,11 +29,7 @@ class ModuleCard extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(
-              module.icon,
-              size: 40,
-              color: theme.colorScheme.primary,
-            ),
+            Icon(module.icon, size: 40, color: theme.colorScheme.primary),
             const SizedBox(height: 16),
             Text(
               module.title,
@@ -56,4 +51,3 @@ class ModuleCard extends StatelessWidget {
     );
   }
 }
-

@@ -6,40 +6,44 @@ import '../widgets/geosurvey_drawer.dart';
 /// Shell for geosurvey module: drawer with section list and [child] as body.
 /// Used with go_router ShellRoute; auth is enforced by parent route guard.
 class GeosurveyShellPage extends StatelessWidget {
-  const GeosurveyShellPage({
-    super.key,
-    required this.child,
-  });
+  const GeosurveyShellPage({super.key, required this.child});
 
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
     final location = GoRouterState.of(context).matchedLocation;
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.menu),
-          onPressed: () => Scaffold.of(context).openDrawer(),
+        // Builder provides a context that is *inside* the Scaffold, which is
+        // required for Scaffold.of(ctx) to find this Scaffold correctly.
+        leading: Builder(
+          builder: (ctx) => IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () => Scaffold.of(ctx).openDrawer(),
+          ),
         ),
         title: Text(
           _titleForLocation(location),
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
         ),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
         elevation: 0,
       ),
       drawer: GeosurveyDrawer(currentLocation: location),
-      body: SafeArea(child: child),
+      body: child,
     );
   }
 
   static String _titleForLocation(String location) {
-    if (location.contains('/mapping-activity') && !location.contains('/mapping/') && !location.contains('/mapping-activity/')) {
+    if (location.contains('/mapping-activity') &&
+        !location.contains('/mapping/') &&
+        !location.contains('/mapping-activity/')) {
       return 'Mapping Activity';
     }
     if (location.contains('/deposits')) return 'Deposits';
