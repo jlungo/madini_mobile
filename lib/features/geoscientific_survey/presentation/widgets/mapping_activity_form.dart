@@ -221,7 +221,7 @@ class _DropdownField extends StatelessWidget {
         Text(label, style: Theme.of(context).textTheme.bodySmall),
         const SizedBox(height: 4),
         DropdownButtonFormField<String>(
-          value: value,
+          initialValue: value,
           items: items
               .map((s) => DropdownMenuItem(value: s, child: Text(s)))
               .toList(),

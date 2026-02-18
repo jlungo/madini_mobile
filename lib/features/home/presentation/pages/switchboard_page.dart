@@ -30,7 +30,7 @@ class SwitchboardPage extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: ListView.separated(
           itemCount: kModules.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 16),
+          separatorBuilder: (_, _) => const SizedBox(height: 16),
           itemBuilder: (context, index) {
             final module = kModules[index];
             

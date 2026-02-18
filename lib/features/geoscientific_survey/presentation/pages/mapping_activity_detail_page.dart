@@ -6,6 +6,9 @@ import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../domain/entities/mapping_activity_entity.dart';
 import '../controllers/mapping_activity_controller.dart';
+import '../widgets/step_content_activity_details.dart';
+import '../widgets/step_content_basemap.dart';
+import '../widgets/step_content_site_visit.dart';
 import '../widgets/workflow_step_list.dart';
 
 /// Detail page for a mapping activity: header (name, id, location, status, Edit)
@@ -115,16 +118,29 @@ class _MappingActivityDetailPageState extends State<MappingActivityDetailPage> {
                 ),
                 const SizedBox(height: 24),
                 if (selectedStep != null)
-                  _StepContentPlaceholder(
-                    stepId: selectedStep.id,
-                    stepTitle: selectedStep.title,
-                  ),
+                  _buildStepContent(activity, selectedStep),
               ],
             ),
           );
         },
       ),
     );
+  }
+
+  Widget _buildStepContent(MappingActivityEntity activity, WorkflowStep selectedStep) {
+    switch (selectedStep.id) {
+      case 'create':
+        return StepContentActivityDetails(activity: activity);
+      case 'basemap':
+        return StepContentBasemap(activity: activity);
+      case 'site-visit':
+        return StepContentSiteVisit(activity: activity);
+      default:
+        return _StepContentPlaceholder(
+          stepId: selectedStep.id,
+          stepTitle: selectedStep.title,
+        );
+    }
   }
 }
 
