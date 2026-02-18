@@ -10,6 +10,9 @@ import 'features/auth/data/datasources/auth_remote_data_source.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
+import 'features/geoscientific_survey/data/repositories/mapping_activity_repository_impl.dart';
+import 'features/geoscientific_survey/domain/repositories/mapping_activity_repository.dart';
+import 'features/geoscientific_survey/presentation/controllers/mapping_activity_controller.dart';
 import 'services/storage_service.dart';
 import 'state/theme_provider.dart';
 
@@ -29,11 +32,19 @@ List<SingleChildWidget> getProviders() {
 
   final authProvider = AuthProvider(authRepository: authRepository);
 
+  final mappingActivityRepository = MappingActivityRepositoryImpl();
+
   return [
     ChangeNotifierProvider(create: (_) => ThemeProvider()),
     Provider<ApiClient>.value(value: apiClient),
     Provider<AuthRepository>.value(value: authRepository),
     ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
+    Provider<MappingActivityRepository>.value(value: mappingActivityRepository),
+    ChangeNotifierProvider<MappingActivityController>(
+      create: (context) => MappingActivityController(
+        repository: context.read<MappingActivityRepository>(),
+      ),
+    ),
     Provider<GoRouter>.value(value: appRouter(authProvider)),
   ];
 }
