@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../shared/widgets/app_scaffold.dart';
 import '../../features/auth/presentation/pages/login_screen.dart';
+import '../../features/auth/presentation/pages/profile_page.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/home/presentation/pages/switchboard_page.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
@@ -21,17 +22,15 @@ GoRouter appRouter(AuthProvider authProvider) => GoRouter(
   redirect: (context, state) {
     final bool loggingIn = state.matchedLocation == '/login';
     final bool isLoggedIn = authProvider.isAuthenticated;
+    final bool sessionExpired =
+        authProvider.status == AuthStatus.sessionExpired;
 
-    // If not logged in and not on login page, redirect to login
-    if (!isLoggedIn && !loggingIn && state.matchedLocation != '/') {
+    if (sessionExpired || (!isLoggedIn && !loggingIn && state.matchedLocation != '/')) {
       return '/login';
     }
-
-    // If logged in and on login page, redirect to home
     if (isLoggedIn && loggingIn) {
       return '/home';
     }
-
     return null;
   },
   routes: <RouteBase>[
@@ -49,6 +48,11 @@ GoRouter appRouter(AuthProvider authProvider) => GoRouter(
       path: '/home',
       name: 'home',
       builder: (context, state) => const SwitchboardPage(),
+    ),
+    GoRoute(
+      path: '/profile',
+      name: 'profile',
+      builder: (context, state) => const ProfilePage(),
     ),
     GoRoute(
       path: '/dashboard',
@@ -93,29 +97,15 @@ class _SplashPageState extends State<_SplashPage> {
   }
 
   Future<void> _init() async {
-    debugPrint('[Splash] _init started');
-    // Wait a bit for the splash animation/feel
     await Future.delayed(const Duration(seconds: 2));
-    debugPrint('[Splash] 2 seconds delay passed');
-    
-    if (mounted) {
-      // Initialize auth check
-      final authProvider = context.read<AuthProvider>();
-      debugPrint('[Splash] Initializing auth check...');
-      await authProvider.checkAuthStatus();
-      debugPrint('[Splash] Auth check completed: ${authProvider.isAuthenticated}');
-      
-      if (mounted) {
-        if (authProvider.isAuthenticated) {
-          debugPrint('[Splash] Redirecting to /home');
-          context.go('/home');
-        } else {
-          debugPrint('[Splash] Redirecting to /login');
-          context.go('/login');
-        }
-      }
+    if (!mounted) return;
+    final authProvider = context.read<AuthProvider>();
+    await authProvider.checkAuthStatus();
+    if (!mounted) return;
+    if (authProvider.isAuthenticated) {
+      context.go('/home');
     } else {
-      debugPrint('[Splash] Widget not mounted after delay');
+      context.go('/login');
     }
   }
 
@@ -124,6 +114,7 @@ class _SplashPageState extends State<_SplashPage> {
     return const AppScaffold(
       title: 'Madini Mobile',
       usePortalHeader: false,
+      showBackButton: false,
       body: Center(child: CircularProgressIndicator()),
     );
   }

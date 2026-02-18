@@ -4,7 +4,8 @@ import '../core/theme/app_theme.dart';
 
 /// Simple ChangeNotifier that toggles between light and dark themes.
 class ThemeProvider extends ChangeNotifier {
-  ThemeMode _mode = ThemeMode.light;
+  /// Default dark to match webapp/GST Field App (left design).
+  ThemeMode _mode = ThemeMode.dark;
 
   ThemeMode get mode => _mode;
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../state/theme_provider.dart';
+import 'buttons/back_button.dart';
 
 /// Common scaffold used across modules, matching the NGMRIS portal shell.
 class AppScaffold extends StatelessWidget {
@@ -21,6 +22,12 @@ class AppScaffold extends StatelessWidget {
   /// Optional actions for the AppBar.
   final List<Widget>? actions;
 
+  /// When true, shows a back button in the AppBar leading (default true).
+  final bool showBackButton;
+
+  /// Route used when back is pressed and there is no route to pop (e.g. /home).
+  final String? backButtonFallbackRoute;
+
   const AppScaffold({
     super.key,
     this.title,
@@ -28,6 +35,8 @@ class AppScaffold extends StatelessWidget {
     this.floatingActionButton,
     this.usePortalHeader = true,
     this.actions,
+    this.showBackButton = true,
+    this.backButtonFallbackRoute = '/home',
   });
 
   @override
@@ -42,6 +51,9 @@ class AppScaffold extends StatelessWidget {
         foregroundColor: theme.colorScheme.onPrimary,
         elevation: 0,
         centerTitle: true,
+        leading: showBackButton
+            ? AppBackButton(fallbackRoute: backButtonFallbackRoute)
+            : null,
         title: Text(
           displayTitle,
           style: theme.textTheme.titleMedium?.copyWith(
