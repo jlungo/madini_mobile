@@ -14,11 +14,13 @@ class MappingActivityController extends ChangeNotifier {
   List<MappingActivityEntity> _activities = [];
   MappingActivityEntity? _selectedActivity;
   bool _isLoading = false;
+  bool _preserveSubmitting = false;
   String? _errorMessage;
 
   List<MappingActivityEntity> get activities => List.unmodifiable(_activities);
   MappingActivityEntity? get selectedActivity => _selectedActivity;
   bool get isLoading => _isLoading;
+  bool get preserveSubmitting => _preserveSubmitting;
   String? get errorMessage => _errorMessage;
   bool get hasError => _errorMessage != null && _errorMessage!.isNotEmpty;
 
@@ -129,6 +131,35 @@ class MappingActivityController extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       return false;
+    }
+  }
+
+  /// Submit preserve-specimens step data. Auth enforced at API layer when backend exists.
+  Future<void> submitPreserveSpecimens(
+    String activityId, {
+    required int specimenCount,
+    required String specimenType,
+    required String destination,
+    String? notes,
+  }) async {
+    _preserveSubmitting = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      await _repository.submitPreserveSpecimens(
+        activityId,
+        specimenCount: specimenCount,
+        specimenType: specimenType,
+        destination: destination,
+        notes: notes,
+      );
+      await loadActivityById(activityId);
+    } catch (e, st) {
+      _errorMessage = e.toString();
+      if (kDebugMode) debugPrintStack(stackTrace: st);
+    } finally {
+      _preserveSubmitting = false;
+      notifyListeners();
     }
   }
 

@@ -9,4 +9,13 @@ abstract class MappingActivityRepository {
   Future<MappingActivityEntity> createActivity(MappingActivityEntity activity);
   Future<MappingActivityEntity> updateActivity(String id, MappingActivityEntity activity);
   Future<void> deleteActivity(String id);
+
+  /// Submit preserve-specimens data for an activity (step-specific). No-op until API exists.
+  Future<void> submitPreserveSpecimens(
+    String activityId, {
+    required int specimenCount,
+    required String specimenType,
+    required String destination,
+    String? notes,
+  });
 }

@@ -8,6 +8,9 @@ import '../../domain/entities/mapping_activity_entity.dart';
 import '../controllers/mapping_activity_controller.dart';
 import '../widgets/step_content_activity_details.dart';
 import '../widgets/step_content_basemap.dart';
+import '../widgets/step_content_map_report.dart';
+import '../widgets/step_content_sample_analysis.dart';
+import '../widgets/step_content_preserve.dart';
 import '../widgets/step_content_site_visit.dart';
 import '../widgets/workflow_step_list.dart';
 
@@ -118,7 +121,7 @@ class _MappingActivityDetailPageState extends State<MappingActivityDetailPage> {
                 ),
                 const SizedBox(height: 24),
                 if (selectedStep != null)
-                  _buildStepContent(activity, selectedStep),
+                  _buildStepContent(context, activity, selectedStep, ctrl),
               ],
             ),
           );
@@ -127,7 +130,12 @@ class _MappingActivityDetailPageState extends State<MappingActivityDetailPage> {
     );
   }
 
-  Widget _buildStepContent(MappingActivityEntity activity, WorkflowStep selectedStep) {
+  Widget _buildStepContent(
+    BuildContext context,
+    MappingActivityEntity activity,
+    WorkflowStep selectedStep,
+    MappingActivityController ctrl,
+  ) {
     switch (selectedStep.id) {
       case 'create':
         return StepContentActivityDetails(activity: activity);
@@ -135,6 +143,22 @@ class _MappingActivityDetailPageState extends State<MappingActivityDetailPage> {
         return StepContentBasemap(activity: activity);
       case 'site-visit':
         return StepContentSiteVisit(activity: activity);
+      case 'sample-analysis':
+        return StepContentSampleAnalysis(activity: activity);
+      case 'reports':
+        return StepContentMapReport(activity: activity);
+      case 'preserve':
+        return StepContentPreserve(
+          activity: activity,
+          isSubmitting: ctrl.preserveSubmitting,
+          onSendToArchive: (p) => ctrl.submitPreserveSpecimens(
+            activity.id,
+            specimenCount: p.specimenCount,
+            specimenType: p.specimenType,
+            destination: p.destination,
+            notes: p.notes,
+          ),
+        );
       default:
         return _StepContentPlaceholder(
           stepId: selectedStep.id,

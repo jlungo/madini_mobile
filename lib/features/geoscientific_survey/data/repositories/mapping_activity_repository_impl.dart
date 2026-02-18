@@ -74,4 +74,15 @@ class MappingActivityRepositoryImpl implements MappingActivityRepository {
   Future<void> deleteActivity(String id) async {
     await _remoteDataSource.deleteActivity(id);
   }
+
+  @override
+  Future<void> submitPreserveSpecimens(
+    String activityId, {
+    required int specimenCount,
+    required String specimenType,
+    required String destination,
+    String? notes,
+  }) async {
+    // No-op until backend endpoint exists; API layer will enforce auth.
+  }
 }
