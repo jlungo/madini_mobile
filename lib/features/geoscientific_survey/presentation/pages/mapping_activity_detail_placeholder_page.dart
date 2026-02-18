@@ -13,6 +13,14 @@ class MappingActivityDetailPlaceholderPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'Mapping Activity',
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.edit_outlined),
+          onPressed: () => context.push(
+            '/geoscientific-survey/mapping/$activityId/edit',
+          ),
+        ),
+      ],
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
