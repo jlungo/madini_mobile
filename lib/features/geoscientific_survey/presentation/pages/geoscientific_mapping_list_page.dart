@@ -1,241 +1,353 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
+import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
-import '../../../../shared/widgets/app_button.dart';
+import '../../domain/entities/mapping_activity_entity.dart';
+import '../controllers/mapping_activity_controller.dart';
 
-class GeoscientificMappingListPage extends StatelessWidget {
+class GeoscientificMappingListPage extends StatefulWidget {
   const GeoscientificMappingListPage({super.key});
+
+  @override
+  State<GeoscientificMappingListPage> createState() =>
+      _GeoscientificMappingListPageState();
+}
+
+class _GeoscientificMappingListPageState
+    extends State<GeoscientificMappingListPage> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<MappingActivityController>().loadActivities();
+    });
+    _searchController.addListener(() {
+      setState(() => _searchQuery = _searchController.text.trim().toLowerCase());
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<MappingActivityEntity> _filter(
+      List<MappingActivityEntity> activities, String query) {
+    if (query.isEmpty) return activities;
+    return activities.where((a) {
+      return a.activityName.toLowerCase().contains(query) ||
+          a.location.toLowerCase().contains(query) ||
+          a.id.toLowerCase().contains(query) ||
+          a.leadScientist.toLowerCase().contains(query) ||
+          a.status.toLowerCase().contains(query);
+    }).toList();
+  }
+
+  Future<void> _confirmDelete(
+      BuildContext context, MappingActivityController ctrl, String id) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Mapping Activity'),
+        content: const Text(
+          'Are you sure you want to delete this mapping activity?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (!context.mounted || confirmed != true) return;
+    final ok = await ctrl.deleteActivity(id);
+    if (!context.mounted) return;
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mapping activity deleted')),
+      );
+    } else if (ctrl.hasError) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ctrl.errorMessage ?? 'Delete failed')),
+      );
+      ctrl.clearError();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return AppScaffold(
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Geoscientific Survey  >  Mapping activity',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Mapping Activity',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Manage field mapping and data collection activities for\nmineral exploration',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Align(
-              alignment: Alignment.centerRight,
-              child: AppButton(
-                onPressed: () =>
-                    context.push('/geoscientific-survey/mapping/new'),
-                variant: AppButtonVariant.primary,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+      body: Consumer<MappingActivityController>(
+        builder: (context, ctrl, _) {
+          final filtered = _filter(ctrl.activities, _searchQuery);
+
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (ctrl.hasError)
+                  Material(
+                    color: theme.colorScheme.errorContainer,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              ctrl.errorMessage ?? 'Error',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onErrorContainer,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: ctrl.clearError,
+                            child: const Text('Dismiss'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                if (ctrl.hasError) const SizedBox(height: 12),
+                Text(
+                  'Geoscientific Survey  >  Mapping activity',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Mapping Activity',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Manage field mapping and data collection activities for\nmineral exploration',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
                   children: [
-                    const Icon(Icons.add, size: 18),
-                    const SizedBox(width: 8),
-                    Text(
-                      'New Mapping Activity',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: theme.colorScheme.onPrimary,
-                        fontWeight: FontWeight.w600,
+                    const Spacer(),
+                    AppButton(
+                      onPressed: ctrl.isLoading
+                          ? null
+                          : () => context.push('/geoscientific-survey/mapping/new'),
+                      variant: AppButtonVariant.primary,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.add, size: 18),
+                          const SizedBox(width: 8),
+                          Text(
+                            'New Mapping Activity',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              color: theme.colorScheme.onPrimary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            AppCard(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: TextField(
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  prefixIcon: const Icon(Icons.search),
-                  hintText: 'Search mapping activities...',
+                const SizedBox(height: 16),
+                AppCard(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      prefixIcon: Icon(Icons.search),
+                      hintText: 'Search mapping activities...',
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: ctrl.isLoading && ctrl.activities.isEmpty
+                      ? const Center(child: CircularProgressIndicator())
+                      : filtered.isEmpty
+                          ? Center(
+                              child: Text(
+                                _searchQuery.isEmpty
+                                    ? 'No mapping activities'
+                                    : 'No results for "$_searchQuery"',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurface
+                                      .withValues(alpha: 0.7),
+                                ),
+                              ),
+                            )
+                          : ListView.separated(
+                              itemCount: filtered.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: 12),
+                              itemBuilder: (context, index) {
+                                final a = filtered[index];
+                                return _MappingActivityCard(
+                                  activity: a,
+                                  onView: () => context.push(
+                                    '/geoscientific-survey/mapping-activity/${a.id}',
+                                  ),
+                                  onEdit: () => context.push(
+                                    '/geoscientific-survey/mapping/${a.id}/edit',
+                                  ),
+                                  onDelete: () =>
+                                      _confirmDelete(context, ctrl, a.id),
+                                  isLoading: ctrl.isLoading,
+                                );
+                              },
+                            ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Showing ${filtered.length} of ${ctrl.activities.length}',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: AppCard(padding: EdgeInsets.zero, child: _MappingTable()),
-            ),
-            const SizedBox(height: 8),
-            const _TableFooter(),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 }
 
-class _MappingTable extends StatelessWidget {
-  final List<_MappingRow> rows = const [
-    _MappingRow(
-      name: 'Coastal Geological Mapping',
-      type: 'Internal',
-      surveyType: 'Geological',
-      location: 'Geita',
-    ),
-    _MappingRow(
-      name: 'Granite Zone Mapping',
-      type: 'Consultancy',
-      surveyType: 'Geological',
-      location: 'Meru',
-    ),
-    _MappingRow(
-      name: 'Regional Geochemical Survey',
-      type: 'Internal',
-      surveyType: 'Geochemical',
-      location: 'Lake',
-    ),
-    _MappingRow(
-      name: 'Hazard Assessment',
-      type: 'Internal',
-      surveyType: 'Geohazard',
-      location: 'Dodoma',
-    ),
-    _MappingRow(
-      name: 'Magnetic Survey',
-      type: 'Consultancy',
-      surveyType: 'Geophysical',
-      location: 'Tanga',
-    ),
-    _MappingRow(
-      name: 'Shear Belt Mapping',
-      type: 'Internal',
-      surveyType: 'Geological',
-      location: 'Kigoma',
-    ),
-    _MappingRow(
-      name: 'Deep Earth Exploration',
-      type: 'Internal',
-      surveyType: 'Geochemical',
-      location: 'Singida',
-    ),
-    _MappingRow(
-      name: 'Seismic Study',
-      type: 'Consultancy',
-      surveyType: 'Geophysical',
-      location: 'Kilimanjaro',
-    ),
-  ];
+class _MappingActivityCard extends StatelessWidget {
+  const _MappingActivityCard({
+    required this.activity,
+    required this.onView,
+    required this.onEdit,
+    required this.onDelete,
+    required this.isLoading,
+  });
 
-  const _MappingTable();
+  final MappingActivityEntity activity;
+  final VoidCallback onView;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final smallStyle = theme.textTheme.bodySmall;
+    final muted = theme.colorScheme.onSurface.withValues(alpha: 0.7);
 
-    final headerStyle = theme.textTheme.bodySmall!.copyWith(
-      fontWeight: FontWeight.w600,
-      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-    );
-
-    final rowStyle = theme.textTheme.bodySmall!;
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minWidth: 700),
-        child: SingleChildScrollView(
-          child: DataTable(
-            headingRowHeight: 44,
-            dataRowMinHeight: 40,
-            dataRowMaxHeight: 44,
-            columns: [
-              DataColumn(label: Text('Activity Name', style: headerStyle)),
-              DataColumn(
-                label: Row(
-                  children: [
-                    Text('Type', style: headerStyle),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.unfold_more, size: 16),
-                  ],
+    return AppCard(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  activity.activityName,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-              DataColumn(
-                label: Row(
-                  children: [
-                    Text('Survey Type', style: headerStyle),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.unfold_more, size: 16),
-                  ],
-                ),
+              _TypeChip(label: activity.activityType),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(activity.id, style: smallStyle?.copyWith(color: muted)),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: [
+              _LabelValue(label: 'Survey', value: activity.surveyType),
+              _LabelValue(label: 'Location', value: activity.location),
+              _LabelValue(label: 'Status', value: activity.status),
+              _LabelValue(label: 'Lead', value: activity.leadScientist),
+              _LabelValue(label: 'Created', value: activity.createdDate),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton.icon(
+                onPressed: isLoading ? null : onView,
+                icon: const Icon(Icons.visibility_outlined, size: 18),
+                label: const Text('View'),
               ),
-              DataColumn(
-                label: Row(
-                  children: [
-                    Text('Location', style: headerStyle),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.unfold_more, size: 16),
-                  ],
-                ),
+              TextButton.icon(
+                onPressed: isLoading ? null : onEdit,
+                icon: const Icon(Icons.edit_outlined, size: 18),
+                label: const Text('Edit'),
+              ),
+              TextButton.icon(
+                onPressed: isLoading ? null : onDelete,
+                icon: Icon(Icons.delete_outline, size: 18,
+                    color: theme.colorScheme.error),
+                label: Text('Delete',
+                    style: TextStyle(color: theme.colorScheme.error)),
               ),
             ],
-            rows: rows
-                .map(
-                  (e) => DataRow(
-                    cells: [
-                      DataCell(Text(e.name, style: rowStyle)),
-                      DataCell(_TypeChip(label: e.type)),
-                      DataCell(Text(e.surveyType, style: rowStyle)),
-                      DataCell(Text(e.location, style: rowStyle)),
-                    ],
-                  ),
-                )
-                .toList(),
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
 class _TypeChip extends StatelessWidget {
-  final String label;
-
   const _TypeChip({required this.label});
+
+  final String label;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bool isInternal = label.toLowerCase() == 'internal';
-
-    final Color background = isInternal
+    final isInternal = label.toLowerCase() == 'internal';
+    final bg = isInternal
         ? theme.colorScheme.primary.withValues(alpha: 0.1)
         : theme.colorScheme.secondary.withValues(alpha: 0.7);
-
-    final Color foreground = isInternal
+    final fg = isInternal
         ? theme.colorScheme.primary
         : theme.colorScheme.onSecondary;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: background,
+        color: bg,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         label,
         style: theme.textTheme.labelSmall?.copyWith(
-          color: foreground,
+          color: fg,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -243,71 +355,19 @@ class _TypeChip extends StatelessWidget {
   }
 }
 
-class _MappingRow {
-  final String name;
-  final String type;
-  final String surveyType;
-  final String location;
+class _LabelValue extends StatelessWidget {
+  const _LabelValue({required this.label, required this.value});
 
-  const _MappingRow({
-    required this.name,
-    required this.type,
-    required this.surveyType,
-    required this.location,
-  });
-}
-
-class _TableFooter extends StatelessWidget {
-  const _TableFooter();
+  final String label;
+  final String value;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    return Row(
-      children: [
-        Text(
-          'Showing 1–8 of 8',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-          ),
-        ),
-        const Spacer(),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: theme.colorScheme.outlineVariant),
-          ),
-          child: Row(
-            children: [
-              Text('10', style: theme.textTheme.bodySmall),
-              const Icon(Icons.arrow_drop_down, size: 18),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        IconButton(
-          visualDensity: VisualDensity.compact,
-          onPressed: () {},
-          icon: const Icon(Icons.first_page),
-        ),
-        IconButton(
-          visualDensity: VisualDensity.compact,
-          onPressed: () {},
-          icon: const Icon(Icons.chevron_left),
-        ),
-        IconButton(
-          visualDensity: VisualDensity.compact,
-          onPressed: () {},
-          icon: const Icon(Icons.chevron_right),
-        ),
-        IconButton(
-          visualDensity: VisualDensity.compact,
-          onPressed: () {},
-          icon: const Icon(Icons.last_page),
-        ),
-      ],
+    final muted = theme.colorScheme.onSurface.withValues(alpha: 0.7);
+    return Text(
+      '$label: $value',
+      style: theme.textTheme.bodySmall?.copyWith(color: muted),
     );
   }
 }

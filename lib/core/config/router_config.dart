@@ -9,8 +9,10 @@ import '../../features/auth/presentation/providers/auth_provider.dart';
 import '../../features/home/presentation/pages/switchboard_page.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/datashop/presentation/pages/datashop_page.dart';
-import '../../features/geoscientific_survey/presentation/pages/geoscientific_mapping_list_page.dart';
 import '../../features/geoscientific_survey/presentation/pages/geoscientific_mapping_create_page.dart';
+import '../../features/geoscientific_survey/presentation/pages/geoscientific_mapping_list_page.dart';
+import '../../features/geoscientific_survey/presentation/pages/mapping_activity_detail_placeholder_page.dart';
+import '../../features/geoscientific_survey/presentation/pages/mapping_activity_edit_placeholder_page.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -75,6 +77,22 @@ GoRouter appRouter(AuthProvider authProvider) => GoRouter(
           name: 'geoscientific-mapping-new',
           builder: (context, state) =>
               const GeoscientificMappingCreatePage(),
+        ),
+        GoRoute(
+          path: 'mapping-activity/:id',
+          name: 'geoscientific-mapping-detail',
+          builder: (context, state) =>
+              MappingActivityDetailPlaceholderPage(
+            activityId: state.pathParameters['id'] ?? '',
+          ),
+        ),
+        GoRoute(
+          path: 'mapping/:id/edit',
+          name: 'geoscientific-mapping-edit',
+          builder: (context, state) =>
+              MappingActivityEditPlaceholderPage(
+            activityId: state.pathParameters['id'] ?? '',
+          ),
         ),
       ],
     ),
