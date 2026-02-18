@@ -11,6 +11,8 @@ import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/datashop/presentation/pages/datashop_page.dart';
 import '../../features/geoscientific_survey/presentation/pages/geoscientific_mapping_create_page.dart';
 import '../../features/geoscientific_survey/presentation/pages/geoscientific_mapping_list_page.dart';
+import '../../features/geoscientific_survey/presentation/pages/geosurvey_placeholder_page.dart';
+import '../../features/geoscientific_survey/presentation/pages/geosurvey_shell_page.dart';
 import '../../features/geoscientific_survey/presentation/pages/mapping_activity_detail_page.dart';
 import '../../features/geoscientific_survey/presentation/pages/geoscientific_mapping_edit_page.dart';
 
@@ -69,9 +71,65 @@ GoRouter appRouter(AuthProvider authProvider) => GoRouter(
     GoRoute(
       path: '/geoscientific-survey',
       name: 'geoscientific-survey',
-      builder: (context, state) =>
-          const GeoscientificMappingListPage(),
+      redirect: (context, state) {
+        if (state.matchedLocation == '/geoscientific-survey') {
+          return '/geoscientific-survey/mapping-activity';
+        }
+        return null;
+      },
       routes: [
+        ShellRoute(
+          builder: (context, state, child) =>
+              GeosurveyShellPage(child: child),
+          routes: [
+            GoRoute(
+              path: 'mapping-activity',
+              name: 'geoscientific-mapping-activity',
+              builder: (context, state) =>
+                  const GeoscientificMappingListPage(useScaffold: false),
+            ),
+            GoRoute(
+              path: 'deposits',
+              builder: (context, state) =>
+                  const GeosurveyPlaceholderPage(title: 'Deposits'),
+            ),
+            GoRoute(
+              path: 'mines',
+              builder: (context, state) =>
+                  const GeosurveyPlaceholderPage(title: 'Mines'),
+            ),
+            GoRoute(
+              path: 'drill-holes',
+              builder: (context, state) =>
+                  const GeosurveyPlaceholderPage(title: 'Drill Holes'),
+            ),
+            GoRoute(
+              path: 'geochemistry',
+              builder: (context, state) =>
+                  const GeosurveyPlaceholderPage(title: 'Geochemistry'),
+            ),
+            GoRoute(
+              path: 'map-viewer',
+              builder: (context, state) =>
+                  const GeosurveyPlaceholderPage(title: 'Map Viewer'),
+            ),
+            GoRoute(
+              path: 'data',
+              builder: (context, state) =>
+                  const GeosurveyPlaceholderPage(title: 'Data'),
+            ),
+            GoRoute(
+              path: 'reports',
+              builder: (context, state) =>
+                  const GeosurveyPlaceholderPage(title: 'Reports'),
+            ),
+            GoRoute(
+              path: 'locations',
+              builder: (context, state) =>
+                  const GeosurveyPlaceholderPage(title: 'Locations'),
+            ),
+          ],
+        ),
         GoRoute(
           path: 'mapping/new',
           name: 'geoscientific-mapping-new',

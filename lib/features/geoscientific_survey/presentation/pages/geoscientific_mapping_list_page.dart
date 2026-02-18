@@ -9,7 +9,13 @@ import '../../domain/entities/mapping_activity_entity.dart';
 import '../controllers/mapping_activity_controller.dart';
 
 class GeoscientificMappingListPage extends StatefulWidget {
-  const GeoscientificMappingListPage({super.key});
+  const GeoscientificMappingListPage({
+    super.key,
+    this.useScaffold = true,
+  });
+
+  /// When false, only the list content is built (for use inside GeosurveyShellPage).
+  final bool useScaffold;
 
   @override
   State<GeoscientificMappingListPage> createState() =>
@@ -90,12 +96,8 @@ class _GeoscientificMappingListPageState
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return AppScaffold(
-      body: Consumer<MappingActivityController>(
+  Widget _buildContent(BuildContext context, ThemeData theme) {
+    return Consumer<MappingActivityController>(
         builder: (context, ctrl, _) {
           final filtered = _filter(ctrl.activities, _searchQuery);
 
@@ -235,8 +237,20 @@ class _GeoscientificMappingListPageState
             ),
           );
         },
-      ),
-    );
+      );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final content = _buildContent(context, theme);
+    if (widget.useScaffold) {
+      return AppScaffold(
+        title: 'Mapping Activity',
+        body: content,
+      );
+    }
+    return content;
   }
 }
 
