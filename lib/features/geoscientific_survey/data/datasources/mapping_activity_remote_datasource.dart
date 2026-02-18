@@ -29,6 +29,10 @@ class MappingActivityRemoteDataSourceImpl implements MappingActivityRemoteDataSo
         samplesCollected: true,
         basemapUploaded: true,
         reportsGenerated: true,
+        source: 'eoffice',
+        approvedByEoffice: true,
+        editorialStatus: 'approved',
+        finalUploadDate: '2024-03-20',
       ),
       const MappingActivityModel(
         id: 'MAP-2024-002',
@@ -42,6 +46,9 @@ class MappingActivityRemoteDataSourceImpl implements MappingActivityRemoteDataSo
         samplesCollected: true,
         basemapUploaded: true,
         reportsGenerated: false,
+        source: 'eoffice',
+        approvedByEoffice: true,
+        editorialStatus: null,
       ),
       const MappingActivityModel(
         id: 'MAP-2024-003',

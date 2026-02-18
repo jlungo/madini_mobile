@@ -22,10 +22,18 @@ class GeoscientificMappingListPage extends StatefulWidget {
       _GeoscientificMappingListPageState();
 }
 
+/// Source filter for mapping activity list.
+enum _SourceFilter { all, fromEoffice }
+
 class _GeoscientificMappingListPageState
     extends State<GeoscientificMappingListPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  _SourceFilter _sourceFilter = _SourceFilter.all;
+
+  static bool _isFromEoffice(MappingActivityEntity a) {
+    return (a.source?.toLowerCase() == 'eoffice') || a.approvedByEoffice;
+  }
 
   @override
   void initState() {
@@ -46,8 +54,12 @@ class _GeoscientificMappingListPageState
 
   List<MappingActivityEntity> _filter(
       List<MappingActivityEntity> activities, String query) {
-    if (query.isEmpty) return activities;
-    return activities.where((a) {
+    var list = activities;
+    if (_sourceFilter == _SourceFilter.fromEoffice) {
+      list = list.where(_isFromEoffice).toList();
+    }
+    if (query.isEmpty) return list;
+    return list.where((a) {
       return a.activityName.toLowerCase().contains(query) ||
           a.location.toLowerCase().contains(query) ||
           a.id.toLowerCase().contains(query) ||
@@ -193,6 +205,33 @@ class _GeoscientificMappingListPageState
                     ),
                   ),
                 ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Text(
+                      'Source:',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ChoiceChip(
+                      label: const Text('All'),
+                      selected: _sourceFilter == _SourceFilter.all,
+                      onSelected: (selected) {
+                        if (selected) setState(() => _sourceFilter = _SourceFilter.all);
+                      },
+                    ),
+                    const SizedBox(width: 6),
+                    ChoiceChip(
+                      label: const Text('From eOffice'),
+                      selected: _sourceFilter == _SourceFilter.fromEoffice,
+                      onSelected: (selected) {
+                        if (selected) setState(() => _sourceFilter = _SourceFilter.fromEoffice);
+                      },
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 16),
                 Expanded(
                   child: ctrl.isLoading && ctrl.activities.isEmpty
@@ -217,6 +256,7 @@ class _GeoscientificMappingListPageState
                                 final a = filtered[index];
                                 return _MappingActivityCard(
                                   activity: a,
+                                  isFromEoffice: _isFromEoffice(a),
                                   onView: () => context.push(
                                     '/geoscientific-survey/mapping-activity/${a.id}',
                                   ),
@@ -261,6 +301,7 @@ class _GeoscientificMappingListPageState
 class _MappingActivityCard extends StatelessWidget {
   const _MappingActivityCard({
     required this.activity,
+    required this.isFromEoffice,
     required this.onView,
     required this.onEdit,
     required this.onDelete,
@@ -268,6 +309,7 @@ class _MappingActivityCard extends StatelessWidget {
   });
 
   final MappingActivityEntity activity;
+  final bool isFromEoffice;
   final VoidCallback onView;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -294,6 +336,31 @@ class _MappingActivityCard extends StatelessWidget {
                   ),
                 ),
               ),
+              if (isFromEoffice)
+                Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.verified_outlined, size: 14, color: theme.colorScheme.primary),
+                        const SizedBox(width: 4),
+                        Text(
+                          'eOffice',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               _TypeChip(label: activity.activityType),
             ],
           ),

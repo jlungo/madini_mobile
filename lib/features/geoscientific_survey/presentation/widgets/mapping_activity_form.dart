@@ -85,6 +85,12 @@ class _MappingActivityFormState extends State<MappingActivityForm> {
       samplesCollected: e?.samplesCollected ?? false,
       basemapUploaded: e?.basemapUploaded ?? false,
       reportsGenerated: e?.reportsGenerated ?? false,
+      source: e?.source,
+      approvedByEoffice: e?.approvedByEoffice ?? false,
+      editorialStatus: e?.editorialStatus,
+      finalUploadDate: e?.finalUploadDate,
+      deskworkCompleted: e?.deskworkCompleted ?? false,
+      deskworkNotes: e?.deskworkNotes,
     );
   }
 

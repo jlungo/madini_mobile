@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/permission_guard.dart';
 import '../../domain/entities/mapping_activity_entity.dart';
 
 /// Lightweight model for a sample analysis request (UI + future API).
+/// Supports demand/contract form (contractDemandRef) and re-examination / other lab actions.
 class SampleRequestItem {
   const SampleRequestItem({
     required this.id,
@@ -15,6 +17,9 @@ class SampleRequestItem {
     required this.hasResults,
     this.results,
     this.labNotes,
+    this.contractDemandRef,
+    this.reExaminationRequested = false,
+    this.submittedToOtherLab = false,
   });
 
   final String id;
@@ -26,29 +31,72 @@ class SampleRequestItem {
   final bool hasResults;
   final Map<String, String>? results;
   final String? labNotes;
+  /// Demand/contract reference when submitted to lab reception.
+  final String? contractDemandRef;
+  final bool reExaminationRequested;
+  final bool submittedToOtherLab;
+
+  SampleRequestItem copyWith({
+    String? id,
+    String? sampleId,
+    String? sampleType,
+    String? analysisType,
+    String? dateSubmitted,
+    String? status,
+    bool? hasResults,
+    Map<String, String>? results,
+    String? labNotes,
+    String? contractDemandRef,
+    bool? reExaminationRequested,
+    bool? submittedToOtherLab,
+  }) {
+    return SampleRequestItem(
+      id: id ?? this.id,
+      sampleId: sampleId ?? this.sampleId,
+      sampleType: sampleType ?? this.sampleType,
+      analysisType: analysisType ?? this.analysisType,
+      dateSubmitted: dateSubmitted ?? this.dateSubmitted,
+      status: status ?? this.status,
+      hasResults: hasResults ?? this.hasResults,
+      results: results ?? this.results,
+      labNotes: labNotes ?? this.labNotes,
+      contractDemandRef: contractDemandRef ?? this.contractDemandRef,
+      reExaminationRequested: reExaminationRequested ?? this.reExaminationRequested,
+      submittedToOtherLab: submittedToOtherLab ?? this.submittedToOtherLab,
+    );
+  }
 }
 
-/// Step content: Sample Analysis – list of sample requests, New Sample Request form,
-/// View Results opens a bottom sheet with sample info and result fields.
+/// Step content: Sample Analysis – demand/contract form to lab, sample requests list,
+/// View Results with Request re-examination / Submit to another lab actions.
 class StepContentSampleAnalysis extends StatefulWidget {
   const StepContentSampleAnalysis({
     super.key,
     required this.activity,
     this.requests = const [],
     this.onSubmitRequest,
+    this.onRequestReExamination,
+    this.onSubmitToOtherLab,
+    this.labActionPermission = 'lab:sample:view',
   });
 
   final MappingActivityEntity activity;
-  /// Initial list (e.g. from controller when API exists). If empty, mock data is used for UI.
   final List<SampleRequestItem> requests;
-  /// Called when user submits a new sample request (for future API integration).
+  /// Submit sample via demand/contract form to lab reception (Case 2).
   final void Function({
     required String sampleId,
     required String sampleType,
     required String analysisType,
     required String dateSubmitted,
     String? labNotes,
+    String? contractDemandRef,
   })? onSubmitRequest;
+  /// Request re-examination for a sample request. Backend can be stubbed.
+  final void Function(String requestId)? onRequestReExamination;
+  /// Submit sample to another lab. Backend can be stubbed.
+  final void Function(String requestId)? onSubmitToOtherLab;
+  /// Permission to show Request re-examination / Submit to another lab (default lab).
+  final String labActionPermission;
 
   @override
   State<StepContentSampleAnalysis> createState() =>
@@ -63,6 +111,7 @@ class _StepContentSampleAnalysisState extends State<StepContentSampleAnalysis> {
   final _analysisTypeController = TextEditingController();
   final _dateController = TextEditingController();
   final _labNotesController = TextEditingController();
+  final _contractDemandRefController = TextEditingController();
 
   static List<SampleRequestItem> _mockRequests() => [
         SampleRequestItem(
@@ -119,6 +168,7 @@ class _StepContentSampleAnalysisState extends State<StepContentSampleAnalysis> {
     _analysisTypeController.dispose();
     _dateController.dispose();
     _labNotesController.dispose();
+    _contractDemandRefController.dispose();
     super.dispose();
   }
 
@@ -141,6 +191,9 @@ class _StepContentSampleAnalysisState extends State<StepContentSampleAnalysis> {
       analysisType: analysisType,
       dateSubmitted: dateSubmitted,
       labNotes: _labNotesController.text.trim().isEmpty ? null : _labNotesController.text.trim(),
+      contractDemandRef: _contractDemandRefController.text.trim().isEmpty
+          ? null
+          : _contractDemandRefController.text.trim(),
     );
     setState(() {
       _showNewForm = false;
@@ -149,7 +202,7 @@ class _StepContentSampleAnalysisState extends State<StepContentSampleAnalysis> {
       _analysisTypeController.clear();
       _dateController.clear();
       _labNotesController.clear();
-      // When API exists, append from response; for now keep mock list
+      _contractDemandRefController.clear();
     });
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -158,12 +211,41 @@ class _StepContentSampleAnalysisState extends State<StepContentSampleAnalysis> {
     }
   }
 
+  void _onRequestReExamination(String requestId) {
+    widget.onRequestReExamination?.call(requestId);
+    final index = _requests.indexWhere((r) => r.id == requestId);
+    if (index >= 0) {
+      setState(() {
+        _requests = List.from(_requests)
+          ..[index] = _requests[index].copyWith(reExaminationRequested: true);
+      });
+    }
+    if (mounted) Navigator.of(context).pop();
+  }
+
+  void _onSubmitToOtherLab(String requestId) {
+    widget.onSubmitToOtherLab?.call(requestId);
+    final index = _requests.indexWhere((r) => r.id == requestId);
+    if (index >= 0) {
+      setState(() {
+        _requests = List.from(_requests)
+          ..[index] = _requests[index].copyWith(submittedToOtherLab: true);
+      });
+    }
+    if (mounted) Navigator.of(context).pop();
+  }
+
   void _openResultsSheet(SampleRequestItem request) {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      builder: (context) => _SampleResultsSheet(request: request),
+      builder: (context) => _SampleResultsSheet(
+        request: request,
+        labActionPermission: widget.labActionPermission,
+        onRequestReExamination: widget.onRequestReExamination != null ? _onRequestReExamination : null,
+        onSubmitToOtherLab: widget.onSubmitToOtherLab != null ? _onSubmitToOtherLab : null,
+      ),
     );
   }
 
@@ -192,7 +274,7 @@ class _StepContentSampleAnalysisState extends State<StepContentSampleAnalysis> {
                 FilledButton.tonalIcon(
                   onPressed: () => setState(() => _showNewForm = !_showNewForm),
                   icon: Icon(_showNewForm ? Icons.close : Icons.add, size: 20),
-                  label: Text(_showNewForm ? 'Cancel' : 'New Sample Request'),
+                  label: Text(_showNewForm ? 'Cancel' : 'Demand/Contract to Lab'),
                 ),
               ],
             ),
@@ -204,6 +286,7 @@ class _StepContentSampleAnalysisState extends State<StepContentSampleAnalysis> {
                 analysisTypeController: _analysisTypeController,
                 dateController: _dateController,
                 labNotesController: _labNotesController,
+                contractDemandRefController: _contractDemandRefController,
                 onSubmit: _handleSubmitRequest,
                 onCancel: () => setState(() => _showNewForm = false),
               ),
@@ -256,6 +339,7 @@ class _NewSampleForm extends StatelessWidget {
     required this.analysisTypeController,
     required this.dateController,
     required this.labNotesController,
+    required this.contractDemandRefController,
     required this.onSubmit,
     required this.onCancel,
   });
@@ -265,6 +349,7 @@ class _NewSampleForm extends StatelessWidget {
   final TextEditingController analysisTypeController;
   final TextEditingController dateController;
   final TextEditingController labNotesController;
+  final TextEditingController contractDemandRefController;
   final VoidCallback onSubmit;
   final VoidCallback onCancel;
 
@@ -283,7 +368,7 @@ class _NewSampleForm extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Submit New Sample',
+            'Demand/Contract form to Lab reception',
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w600,
             ),
@@ -294,6 +379,16 @@ class _NewSampleForm extends StatelessWidget {
             decoration: const InputDecoration(
               labelText: 'Sample ID',
               hintText: 'e.g. SAMPLE-2024-004',
+              border: OutlineInputBorder(),
+            ),
+            textInputAction: TextInputAction.next,
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: contractDemandRefController,
+            decoration: const InputDecoration(
+              labelText: 'Contract/Demand reference',
+              hintText: 'e.g. DEMAND-2024-001 or contract ref',
               border: OutlineInputBorder(),
             ),
             textInputAction: TextInputAction.next,
@@ -353,8 +448,8 @@ class _NewSampleForm extends StatelessWidget {
             children: [
               FilledButton.icon(
                 onPressed: onSubmit,
-                icon: const Icon(Icons.science_outlined, size: 18),
-                label: const Text('Submit Request'),
+                icon: const Icon(Icons.send_outlined, size: 18),
+                label: const Text('Submit to Lab reception'),
               ),
               const SizedBox(width: 8),
               OutlinedButton(
@@ -460,13 +555,23 @@ class _RequestCard extends StatelessWidget {
 }
 
 class _SampleResultsSheet extends StatelessWidget {
-  const _SampleResultsSheet({required this.request});
+  const _SampleResultsSheet({
+    required this.request,
+    required this.labActionPermission,
+    this.onRequestReExamination,
+    this.onSubmitToOtherLab,
+  });
 
   final SampleRequestItem request;
+  final String labActionPermission;
+  final void Function(String requestId)? onRequestReExamination;
+  final void Function(String requestId)? onSubmitToOtherLab;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hasLabActions = request.hasResults &&
+        (onRequestReExamination != null || onSubmitToOtherLab != null);
 
     return DraggableScrollableSheet(
       initialChildSize: 0.6,
@@ -513,6 +618,8 @@ class _SampleResultsSheet extends StatelessWidget {
                   const SizedBox(height: 10),
                   _InfoRow(label: 'Request ID', value: request.id),
                   _InfoRow(label: 'Sample ID', value: request.sampleId),
+                  if (request.contractDemandRef != null)
+                    _InfoRow(label: 'Contract/Demand ref', value: request.contractDemandRef!),
                   _InfoRow(label: 'Sample Type', value: request.sampleType),
                   _InfoRow(label: 'Analysis Type', value: request.analysisType),
                   _InfoRow(label: 'Date Submitted', value: request.dateSubmitted),
@@ -585,6 +692,71 @@ class _SampleResultsSheet extends StatelessWidget {
                   ),
                 ),
               ),
+            if (hasLabActions) ...[
+              const SizedBox(height: 16),
+              PermissionGuard.single(
+                permission: labActionPermission,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Follow-up actions',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    if (request.reExaminationRequested)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          children: [
+                            Icon(Icons.check_circle_outline, size: 18, color: theme.colorScheme.primary),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Re-examination requested',
+                              style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.primary),
+                            ),
+                          ],
+                        ),
+                      )
+                    else if (onRequestReExamination != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.tonalIcon(
+                            onPressed: () => onRequestReExamination!(request.id),
+                            icon: const Icon(Icons.refresh_outlined, size: 20),
+                            label: const Text('Request re-examination'),
+                          ),
+                        ),
+                      ),
+                    if (request.submittedToOtherLab)
+                      Row(
+                        children: [
+                          Icon(Icons.check_circle_outline, size: 18, color: theme.colorScheme.primary),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Submitted to another lab',
+                            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.primary),
+                          ),
+                        ],
+                      )
+                    else if (onSubmitToOtherLab != null)
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.tonalIcon(
+                          onPressed: () => onSubmitToOtherLab!(request.id),
+                          icon: const Icon(Icons.send_outlined, size: 20),
+                          label: const Text('Submit to another lab'),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,

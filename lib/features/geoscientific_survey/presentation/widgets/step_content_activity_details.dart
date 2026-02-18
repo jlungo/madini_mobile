@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../domain/entities/mapping_activity_entity.dart';
 
+bool _isFromEoffice(MappingActivityEntity a) {
+  return (a.source?.toLowerCase() == 'eoffice') || a.approvedByEoffice;
+}
+
 /// Step content: Activity Details – read-only summary and progress badges.
 class StepContentActivityDetails extends StatelessWidget {
   const StepContentActivityDetails({super.key, required this.activity});
@@ -31,6 +35,37 @@ class StepContentActivityDetails extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
+          if (_isFromEoffice(activity)) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.verified_outlined,
+                    size: 20,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Source: eOffice (Approved)',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
           Wrap(
             spacing: 24,
             runSpacing: 16,

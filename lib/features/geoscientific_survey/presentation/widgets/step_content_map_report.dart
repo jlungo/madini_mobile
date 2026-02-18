@@ -2,16 +2,22 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../shared/widgets/permission_guard.dart';
 import '../../domain/entities/mapping_activity_entity.dart';
 
-/// Step content: Map & Report – upload geological map and final report files,
-/// optional summary text; shows Uploaded state when [activity.reportsGenerated].
+/// Step content: Draft Map & Report – upload draft geological map and report,
+/// optional summary; Submit to cartographers / Finalize draft actions.
+/// Shows uploaded state when [activity.reportsGenerated].
 class StepContentMapReport extends StatefulWidget {
   const StepContentMapReport({
     super.key,
     required this.activity,
     this.onUpload,
     this.onReplace,
+    this.onSubmitToCartographers,
+    this.onFinalizeDraft,
+    this.isSubmitting = false,
+    this.draftActionPermission = 'survey:fieldwork:view',
   });
 
   final MappingActivityEntity activity;
@@ -27,6 +33,13 @@ class StepContentMapReport extends StatefulWidget {
     PlatformFile? reportFile,
     String? summary,
   })? onReplace;
+  /// Submit preliminary data to cartographers (Case 1). Gated by permission.
+  final VoidCallback? onSubmitToCartographers;
+  /// Finalize draft incorporating lab results (step 10). Gated by permission.
+  final VoidCallback? onFinalizeDraft;
+  final bool isSubmitting;
+  /// Permission required to show Submit to cartographers / Finalize draft (default survey).
+  final String draftActionPermission;
 
   @override
   State<StepContentMapReport> createState() => _StepContentMapReportState();
@@ -132,7 +145,7 @@ class _StepContentMapReportState extends State<StepContentMapReport> {
                 Icon(Icons.map_outlined, size: 22, color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
                 Text(
-                  'Upload Maps and Reports',
+                  'Draft Map & Report',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -146,20 +159,30 @@ class _StepContentMapReportState extends State<StepContentMapReport> {
               OutlinedButton.icon(
                 onPressed: _startReplace,
                 icon: const Icon(Icons.upload_outlined, size: 20),
-                label: const Text('Replace Maps & Reports'),
+                label: const Text('Replace draft map & report'),
               ),
+              if (widget.onSubmitToCartographers != null || widget.onFinalizeDraft != null) ...[
+                const SizedBox(height: 20),
+                _DraftActionsSection(
+                  activity: activity,
+                  onSubmitToCartographers: widget.onSubmitToCartographers,
+                  onFinalizeDraft: widget.onFinalizeDraft,
+                  isSubmitting: widget.isSubmitting,
+                  permission: widget.draftActionPermission,
+                ),
+              ],
             ] else ...[
               _FilePickerRow(
-                label: 'Geological Map',
-                hint: 'Upload the final geological map',
+                label: 'Draft geological map',
+                hint: 'Upload the draft geological map',
                 extensions: 'PDF, JPG, PNG',
                 file: _mapFile,
                 onPick: _pickMap,
               ),
               const SizedBox(height: 14),
               _FilePickerRow(
-                label: 'Final Report',
-                hint: 'Upload the comprehensive survey report',
+                label: 'Draft report',
+                hint: 'Upload the draft survey report',
                 extensions: 'PDF, DOC, DOCX',
                 file: _reportFile,
                 onPick: _pickReport,
@@ -183,12 +206,95 @@ class _StepContentMapReportState extends State<StepContentMapReport> {
                     : null,
                 icon: const Icon(Icons.upload_outlined, size: 20),
                 label: Text(
-                  _showFormForReplace ? 'Replace Maps & Reports' : 'Upload Maps & Reports',
+                  _showFormForReplace ? 'Replace draft map & report' : 'Upload draft map & report',
                 ),
               ),
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Submit to cartographers / Finalize draft actions, gated by [permission].
+class _DraftActionsSection extends StatelessWidget {
+  const _DraftActionsSection({
+    required this.activity,
+    this.onSubmitToCartographers,
+    this.onFinalizeDraft,
+    this.isSubmitting = false,
+    required this.permission,
+  });
+
+  final MappingActivityEntity activity;
+  final VoidCallback? onSubmitToCartographers;
+  final VoidCallback? onFinalizeDraft;
+  final bool isSubmitting;
+  final String permission;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return PermissionGuard.single(
+      permission: permission,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Draft actions',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (activity.submittedToCartographers)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle_outline, size: 18, color: theme.colorScheme.primary),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Submitted to cartographers',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else if (onSubmitToCartographers != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: FilledButton.tonalIcon(
+                onPressed: isSubmitting ? null : onSubmitToCartographers,
+                icon: const Icon(Icons.send_outlined, size: 20),
+                label: const Text('Submit to cartographers'),
+              ),
+            ),
+          if (activity.draftFinalized)
+            Row(
+              children: [
+                Icon(Icons.check_circle_outline, size: 18, color: theme.colorScheme.primary),
+                const SizedBox(width: 6),
+                Text(
+                  'Draft finalized (lab results incorporated)',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            )
+          else if (onFinalizeDraft != null)
+            FilledButton.tonalIcon(
+              onPressed: isSubmitting ? null : onFinalizeDraft,
+              icon: const Icon(Icons.done_all_outlined, size: 20),
+              label: const Text('Finalize draft (incorporate lab results)'),
+            ),
+        ],
       ),
     );
   }
@@ -218,7 +324,7 @@ class _UploadedState extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Maps & Reports',
+                  'Draft map & report',
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
@@ -243,7 +349,7 @@ class _UploadedState extends StatelessWidget {
                 Icon(Icons.check_circle_outline, size: 16, color: theme.colorScheme.primary),
                 const SizedBox(width: 6),
                 Text(
-                  'Uploaded',
+                  'Draft uploaded',
                   style: theme.textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: theme.colorScheme.onPrimaryContainer,

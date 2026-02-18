@@ -8,6 +8,9 @@ import '../../domain/entities/mapping_activity_entity.dart';
 import '../controllers/mapping_activity_controller.dart';
 import '../widgets/step_content_activity_details.dart';
 import '../widgets/step_content_basemap.dart';
+import '../widgets/step_content_deskwork.dart';
+import '../widgets/step_content_editorial.dart';
+import '../widgets/step_content_final_upload.dart';
 import '../widgets/step_content_map_report.dart';
 import '../widgets/step_content_sample_analysis.dart';
 import '../widgets/step_content_preserve.dart';
@@ -15,7 +18,7 @@ import '../widgets/step_content_site_visit.dart';
 import '../widgets/workflow_step_list.dart';
 
 /// Detail page for a mapping activity: header (name, id, location, status, Edit)
-/// and placeholder for workflow steps (TODO 8+).
+/// and workflow steps aligned with process flow (Activity Details → … → Final Upload).
 class MappingActivityDetailPage extends StatefulWidget {
   const MappingActivityDetailPage({super.key, required this.activityId});
 
@@ -139,14 +142,43 @@ class _MappingActivityDetailPageState extends State<MappingActivityDetailPage> {
     switch (selectedStep.id) {
       case 'create':
         return StepContentActivityDetails(activity: activity);
+      case 'deskwork':
+        return StepContentDeskwork(
+          activity: activity,
+          isSaving: ctrl.isLoading,
+          onSave: ({required bool completed, String? notes}) =>
+              ctrl.updateDeskwork(activity.id, completed: completed, notes: notes),
+        );
       case 'basemap':
         return StepContentBasemap(activity: activity);
       case 'site-visit':
         return StepContentSiteVisit(activity: activity);
       case 'sample-analysis':
-        return StepContentSampleAnalysis(activity: activity);
-      case 'reports':
-        return StepContentMapReport(activity: activity);
+        return StepContentSampleAnalysis(
+          activity: activity,
+          onRequestReExamination: (requestId) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'Re-examination request will be sent when backend is connected.',
+                  ),
+                ),
+              );
+            }
+          },
+          onSubmitToOtherLab: (requestId) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'Submit to another lab will be sent when backend is connected.',
+                  ),
+                ),
+              );
+            }
+          },
+        );
       case 'preserve':
         return StepContentPreserve(
           activity: activity,
@@ -158,6 +190,26 @@ class _MappingActivityDetailPageState extends State<MappingActivityDetailPage> {
             destination: p.destination,
             notes: p.notes,
           ),
+        );
+      case 'reports':
+        return StepContentMapReport(
+          activity: activity,
+          isSubmitting: ctrl.isLoading,
+          onSubmitToCartographers: () => ctrl.submitToCartographers(activity.id),
+          onFinalizeDraft: () => ctrl.finalizeDraft(activity.id),
+        );
+      case 'editorial':
+        return StepContentEditorial(
+          activity: activity,
+          isSubmitting: ctrl.isLoading,
+          onSubmitToEditorial: () => ctrl.submitToEditorial(activity.id),
+          onNavigateToStep: (stepId) => setState(() => _selectedStepId = stepId),
+        );
+      case 'final-upload':
+        return StepContentFinalUpload(
+          activity: activity,
+          isSubmitting: ctrl.isLoading,
+          onCompleteFinalUpload: () => ctrl.markFinalUpload(activity.id),
         );
       default:
         return _StepContentPlaceholder(
@@ -243,7 +295,7 @@ class _StatusChip extends StatelessWidget {
   }
 }
 
-/// Placeholder for step-specific content. Replace with real step content in TODOs 9–14.
+/// Placeholder for step-specific content (deskwork, editorial, final-upload until implemented).
 class _StepContentPlaceholder extends StatelessWidget {
   const _StepContentPlaceholder({
     required this.stepId,

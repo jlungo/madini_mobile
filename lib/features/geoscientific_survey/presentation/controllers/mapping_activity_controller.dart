@@ -134,6 +134,56 @@ class MappingActivityController extends ChangeNotifier {
     }
   }
 
+  /// Mark final upload completed (step 12). Sets finalUploadDate to today. Auth at API layer.
+  Future<void> markFinalUpload(String activityId) async {
+    if (_selectedActivity?.id != activityId) await loadActivityById(activityId);
+    final current = _selectedActivity;
+    if (current == null) return;
+    final date = DateTime.now().toIso8601String().substring(0, 10);
+    final merged = current.copyWith(finalUploadDate: date);
+    await updateActivity(activityId, merged);
+  }
+
+  /// Submit draft map and report to editorial. Sets editorialStatus to 'draft_submitted'. Auth at API layer.
+  Future<void> submitToEditorial(String activityId) async {
+    if (_selectedActivity?.id != activityId) await loadActivityById(activityId);
+    final current = _selectedActivity;
+    if (current == null) return;
+    final merged = current.copyWith(editorialStatus: 'draft_submitted');
+    await updateActivity(activityId, merged);
+  }
+
+  /// Submit preliminary data to cartographers (Draft Map & Report, Case 1). Auth at API layer.
+  Future<void> submitToCartographers(String activityId) async {
+    if (_selectedActivity?.id != activityId) await loadActivityById(activityId);
+    final current = _selectedActivity;
+    if (current == null) return;
+    final merged = current.copyWith(submittedToCartographers: true);
+    await updateActivity(activityId, merged);
+  }
+
+  /// Finalize draft incorporating lab results (Draft Map & Report, step 10). Auth at API layer.
+  Future<void> finalizeDraft(String activityId) async {
+    if (_selectedActivity?.id != activityId) await loadActivityById(activityId);
+    final current = _selectedActivity;
+    if (current == null) return;
+    final merged = current.copyWith(draftFinalized: true);
+    await updateActivity(activityId, merged);
+  }
+
+  /// Update deskwork step (literature review, satellite data, spatial overlay). Auth at API layer.
+  Future<void> updateDeskwork(
+    String activityId, {
+    required bool completed,
+    String? notes,
+  }) async {
+    if (_selectedActivity?.id != activityId) await loadActivityById(activityId);
+    final current = _selectedActivity;
+    if (current == null) return;
+    final merged = current.copyWith(deskworkCompleted: completed, deskworkNotes: notes);
+    await updateActivity(activityId, merged);
+  }
+
   /// Submit preserve-specimens step data. Auth enforced at API layer when backend exists.
   Future<void> submitPreserveSpecimens(
     String activityId, {

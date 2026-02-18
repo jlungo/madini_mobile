@@ -1,4 +1,5 @@
 /// Data model for a mapping activity. Aligns with webapp MappingActivity.
+/// Optional fields support process flow: eoffice source, editorial status, final upload.
 class MappingActivityModel {
   final String id;
   final String activityName;
@@ -12,6 +13,14 @@ class MappingActivityModel {
   final bool samplesCollected;
   final bool basemapUploaded;
   final bool reportsGenerated;
+  final String? source;
+  final bool approvedByEoffice;
+  final String? editorialStatus;
+  final String? finalUploadDate;
+  final bool deskworkCompleted;
+  final String? deskworkNotes;
+  final bool submittedToCartographers;
+  final bool draftFinalized;
 
   const MappingActivityModel({
     required this.id,
@@ -26,6 +35,14 @@ class MappingActivityModel {
     required this.samplesCollected,
     required this.basemapUploaded,
     required this.reportsGenerated,
+    this.source,
+    this.approvedByEoffice = false,
+    this.editorialStatus,
+    this.finalUploadDate,
+    this.deskworkCompleted = false,
+    this.deskworkNotes,
+    this.submittedToCartographers = false,
+    this.draftFinalized = false,
   });
 
   factory MappingActivityModel.fromJson(Map<String, dynamic> json) {
@@ -42,6 +59,14 @@ class MappingActivityModel {
       samplesCollected: json['samplesCollected'] as bool? ?? false,
       basemapUploaded: json['basemapUploaded'] as bool? ?? false,
       reportsGenerated: json['reportsGenerated'] as bool? ?? false,
+      source: json['source'] as String?,
+      approvedByEoffice: json['approvedByEoffice'] as bool? ?? false,
+      editorialStatus: json['editorialStatus'] as String?,
+      finalUploadDate: json['finalUploadDate'] as String?,
+      deskworkCompleted: json['deskworkCompleted'] as bool? ?? false,
+      deskworkNotes: json['deskworkNotes'] as String?,
+      submittedToCartographers: json['submittedToCartographers'] as bool? ?? false,
+      draftFinalized: json['draftFinalized'] as bool? ?? false,
     );
   }
 
@@ -59,6 +84,14 @@ class MappingActivityModel {
       'samplesCollected': samplesCollected,
       'basemapUploaded': basemapUploaded,
       'reportsGenerated': reportsGenerated,
+      if (source != null) 'source': source,
+      if (approvedByEoffice) 'approvedByEoffice': approvedByEoffice,
+      if (editorialStatus != null) 'editorialStatus': editorialStatus,
+      if (finalUploadDate != null) 'finalUploadDate': finalUploadDate,
+      if (deskworkCompleted) 'deskworkCompleted': deskworkCompleted,
+      if (deskworkNotes != null) 'deskworkNotes': deskworkNotes,
+      if (submittedToCartographers) 'submittedToCartographers': submittedToCartographers,
+      if (draftFinalized) 'draftFinalized': draftFinalized,
     };
   }
 
@@ -75,6 +108,14 @@ class MappingActivityModel {
     bool? samplesCollected,
     bool? basemapUploaded,
     bool? reportsGenerated,
+    String? source,
+    bool? approvedByEoffice,
+    String? editorialStatus,
+    String? finalUploadDate,
+    bool? deskworkCompleted,
+    String? deskworkNotes,
+    bool? submittedToCartographers,
+    bool? draftFinalized,
   }) {
     return MappingActivityModel(
       id: id ?? this.id,
@@ -89,6 +130,14 @@ class MappingActivityModel {
       samplesCollected: samplesCollected ?? this.samplesCollected,
       basemapUploaded: basemapUploaded ?? this.basemapUploaded,
       reportsGenerated: reportsGenerated ?? this.reportsGenerated,
+      source: source ?? this.source,
+      approvedByEoffice: approvedByEoffice ?? this.approvedByEoffice,
+      editorialStatus: editorialStatus ?? this.editorialStatus,
+      finalUploadDate: finalUploadDate ?? this.finalUploadDate,
+      deskworkCompleted: deskworkCompleted ?? this.deskworkCompleted,
+      deskworkNotes: deskworkNotes ?? this.deskworkNotes,
+      submittedToCartographers: submittedToCartographers ?? this.submittedToCartographers,
+      draftFinalized: draftFinalized ?? this.draftFinalized,
     );
   }
 }

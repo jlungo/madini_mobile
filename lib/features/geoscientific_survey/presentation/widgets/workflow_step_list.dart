@@ -20,7 +20,8 @@ class WorkflowStep {
   final IconData icon;
 }
 
-/// Builds the ordered list of workflow steps for a mapping activity.
+/// Builds the ordered list of workflow steps for a mapping activity (process-flow aligned).
+/// Order: Activity Details → Deskwork → Basemap → Site Visit → [Sample Analysis] → Preserve → Draft Map & Report → Editorial → Final Upload.
 /// Sample Analysis is included only when [activity.samplesCollected] is true.
 List<WorkflowStep> buildWorkflowSteps(MappingActivityEntity activity) {
   const statusOrder = [
@@ -35,6 +36,7 @@ List<WorkflowStep> buildWorkflowSteps(MappingActivityEntity activity) {
   final currentIndex = statusOrder.indexOf(activity.status);
   final steps = <WorkflowStep>[];
 
+  // 1. Activity Details
   steps.add(const WorkflowStep(
     id: 'create',
     title: 'Activity Details',
@@ -43,6 +45,18 @@ List<WorkflowStep> buildWorkflowSteps(MappingActivityEntity activity) {
     icon: Icons.description_outlined,
   ));
 
+  // 2. Deskwork (literature, satellite, spatial overlay)
+  steps.add(WorkflowStep(
+    id: 'deskwork',
+    title: 'Deskwork',
+    description: 'Literature review, satellite data, spatial overlay',
+    status: activity.deskworkCompleted
+        ? WorkflowStepStatus.completed
+        : (currentIndex == 0 ? WorkflowStepStatus.current : WorkflowStepStatus.pending),
+    icon: Icons.library_books_outlined,
+  ));
+
+  // 3. Basemap
   steps.add(WorkflowStep(
     id: 'basemap',
     title: 'Basemap',
@@ -53,6 +67,7 @@ List<WorkflowStep> buildWorkflowSteps(MappingActivityEntity activity) {
     icon: Icons.map_outlined,
   ));
 
+  // 4. Site Visit & Data Collection
   steps.add(WorkflowStep(
     id: 'site-visit',
     title: 'Site Visit & Data Collection',
@@ -65,6 +80,7 @@ List<WorkflowStep> buildWorkflowSteps(MappingActivityEntity activity) {
     icon: Icons.camera_alt_outlined,
   ));
 
+  // 5. Sample Analysis (conditional)
   if (activity.samplesCollected) {
     steps.add(WorkflowStep(
       id: 'sample-analysis',
@@ -82,18 +98,7 @@ List<WorkflowStep> buildWorkflowSteps(MappingActivityEntity activity) {
     ));
   }
 
-  steps.add(WorkflowStep(
-    id: 'reports',
-    title: 'Map & Report Creation',
-    description: 'Generate maps and reports',
-    status: activity.reportsGenerated
-        ? WorkflowStepStatus.completed
-        : (activity.status == 'Map & Report Preparation'
-            ? WorkflowStepStatus.current
-            : WorkflowStepStatus.pending),
-    icon: Icons.upload_file_outlined,
-  ));
-
+  // 6. Preserve Specimens (Museum)
   steps.add(WorkflowStep(
     id: 'preserve',
     title: 'Preserve Specimens',
@@ -102,6 +107,45 @@ List<WorkflowStep> buildWorkflowSteps(MappingActivityEntity activity) {
         ? WorkflowStepStatus.completed
         : WorkflowStepStatus.pending,
     icon: Icons.account_balance_outlined,
+  ));
+
+  // 7. Draft Map & Report
+  steps.add(WorkflowStep(
+    id: 'reports',
+    title: 'Draft Map & Report',
+    description: 'Upload draft map and report',
+    status: activity.reportsGenerated
+        ? WorkflowStepStatus.completed
+        : (activity.status == 'Map & Report Preparation'
+            ? WorkflowStepStatus.current
+            : WorkflowStepStatus.pending),
+    icon: Icons.upload_file_outlined,
+  ));
+
+  // 8. Editorial Submission
+  final editorialStatus = activity.editorialStatus;
+  steps.add(WorkflowStep(
+    id: 'editorial',
+    title: 'Editorial Submission',
+    description: 'Submit draft to editorial; returned or approved',
+    status: editorialStatus == 'approved' || editorialStatus == 'returned'
+        ? WorkflowStepStatus.completed
+        : (editorialStatus == 'draft_submitted'
+            ? WorkflowStepStatus.current
+            : WorkflowStepStatus.pending),
+    icon: Icons.rate_review_outlined,
+  ));
+
+  // 9. Final Upload (gated by editorial approval)
+  final hasFinalUpload = activity.finalUploadDate != null && activity.finalUploadDate!.isNotEmpty;
+  steps.add(WorkflowStep(
+    id: 'final-upload',
+    title: 'Final Upload',
+    description: 'Upload final data and map in approved formats',
+    status: hasFinalUpload
+        ? WorkflowStepStatus.completed
+        : (activity.isEditorialApproved ? WorkflowStepStatus.current : WorkflowStepStatus.pending),
+    icon: Icons.cloud_upload_outlined,
   ));
 
   return steps;

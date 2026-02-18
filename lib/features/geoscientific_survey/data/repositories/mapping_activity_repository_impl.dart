@@ -26,6 +26,14 @@ class MappingActivityRepositoryImpl implements MappingActivityRepository {
       samplesCollected: m.samplesCollected,
       basemapUploaded: m.basemapUploaded,
       reportsGenerated: m.reportsGenerated,
+      source: m.source,
+      approvedByEoffice: m.approvedByEoffice,
+      editorialStatus: m.editorialStatus,
+      finalUploadDate: m.finalUploadDate,
+      deskworkCompleted: m.deskworkCompleted,
+      deskworkNotes: m.deskworkNotes,
+      submittedToCartographers: m.submittedToCartographers,
+      draftFinalized: m.draftFinalized,
     );
   }
 
@@ -43,6 +51,14 @@ class MappingActivityRepositoryImpl implements MappingActivityRepository {
       samplesCollected: e.samplesCollected,
       basemapUploaded: e.basemapUploaded,
       reportsGenerated: e.reportsGenerated,
+      source: e.source,
+      approvedByEoffice: e.approvedByEoffice,
+      editorialStatus: e.editorialStatus,
+      finalUploadDate: e.finalUploadDate,
+      deskworkCompleted: e.deskworkCompleted,
+      deskworkNotes: e.deskworkNotes,
+      submittedToCartographers: e.submittedToCartographers,
+      draftFinalized: e.draftFinalized,
     );
   }
 
