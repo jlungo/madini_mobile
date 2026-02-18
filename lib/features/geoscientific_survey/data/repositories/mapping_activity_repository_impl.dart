@@ -1,28 +1,77 @@
+import '../../domain/entities/mapping_activity_entity.dart';
+import '../../domain/repositories/mapping_activity_repository.dart';
 import '../datasources/mapping_activity_remote_datasource.dart';
 import '../models/mapping_activity_model.dart';
 
 /// Data-layer implementation of mapping activity repository.
-/// Delegates to remote datasource (mock or API). Will implement domain
-/// repository interface when domain layer is added.
-class MappingActivityRepositoryImpl {
+/// Delegates to remote datasource (mock or API); auth is applied at API layer.
+class MappingActivityRepositoryImpl implements MappingActivityRepository {
   final MappingActivityRemoteDataSource _remoteDataSource;
 
   MappingActivityRepositoryImpl({
     MappingActivityRemoteDataSource? remoteDataSource,
   }) : _remoteDataSource = remoteDataSource ?? MappingActivityRemoteDataSourceImpl();
 
-  Future<List<MappingActivityModel>> getActivities() =>
-      _remoteDataSource.getActivities();
+  static MappingActivityEntity _toEntity(MappingActivityModel m) {
+    return MappingActivityEntity(
+      id: m.id,
+      activityName: m.activityName,
+      activityType: m.activityType,
+      surveyType: m.surveyType,
+      location: m.location,
+      status: m.status,
+      createdDate: m.createdDate,
+      completedDate: m.completedDate,
+      leadScientist: m.leadScientist,
+      samplesCollected: m.samplesCollected,
+      basemapUploaded: m.basemapUploaded,
+      reportsGenerated: m.reportsGenerated,
+    );
+  }
 
-  Future<MappingActivityModel?> getActivityById(String id) =>
-      _remoteDataSource.getActivityById(id);
+  static MappingActivityModel _toModel(MappingActivityEntity e) {
+    return MappingActivityModel(
+      id: e.id,
+      activityName: e.activityName,
+      activityType: e.activityType,
+      surveyType: e.surveyType,
+      location: e.location,
+      status: e.status,
+      createdDate: e.createdDate,
+      completedDate: e.completedDate,
+      leadScientist: e.leadScientist,
+      samplesCollected: e.samplesCollected,
+      basemapUploaded: e.basemapUploaded,
+      reportsGenerated: e.reportsGenerated,
+    );
+  }
 
-  Future<MappingActivityModel> createActivity(MappingActivityModel activity) =>
-      _remoteDataSource.createActivity(activity);
+  @override
+  Future<List<MappingActivityEntity>> getActivities() async {
+    final list = await _remoteDataSource.getActivities();
+    return list.map(_toEntity).toList();
+  }
 
-  Future<MappingActivityModel> updateActivity(String id, MappingActivityModel activity) =>
-      _remoteDataSource.updateActivity(id, activity);
+  @override
+  Future<MappingActivityEntity?> getActivityById(String id) async {
+    final model = await _remoteDataSource.getActivityById(id);
+    return model != null ? _toEntity(model) : null;
+  }
 
-  Future<void> deleteActivity(String id) =>
-      _remoteDataSource.deleteActivity(id);
+  @override
+  Future<MappingActivityEntity> createActivity(MappingActivityEntity activity) async {
+    final model = await _remoteDataSource.createActivity(_toModel(activity));
+    return _toEntity(model);
+  }
+
+  @override
+  Future<MappingActivityEntity> updateActivity(String id, MappingActivityEntity activity) async {
+    final model = await _remoteDataSource.updateActivity(id, _toModel(activity));
+    return _toEntity(model);
+  }
+
+  @override
+  Future<void> deleteActivity(String id) async {
+    await _remoteDataSource.deleteActivity(id);
+  }
 }
