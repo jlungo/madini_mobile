@@ -6,6 +6,7 @@ import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../domain/entities/mapping_activity_entity.dart';
 import '../controllers/mapping_activity_controller.dart';
+import '../widgets/workflow_step_list.dart';
 
 /// Detail page for a mapping activity: header (name, id, location, status, Edit)
 /// and placeholder for workflow steps (TODO 8+).
@@ -20,6 +21,8 @@ class MappingActivityDetailPage extends StatefulWidget {
 }
 
 class _MappingActivityDetailPageState extends State<MappingActivityDetailPage> {
+  String? _selectedStepId;
+
   @override
   void initState() {
     super.initState();
@@ -71,6 +74,17 @@ class _MappingActivityDetailPageState extends State<MappingActivityDetailPage> {
             );
           }
 
+          final steps = buildWorkflowSteps(activity);
+          final selectedId = _selectedStepId ?? (steps.isNotEmpty ? steps.first.id : '');
+          WorkflowStep? selectedStep;
+          for (final s in steps) {
+            if (s.id == selectedId) {
+              selectedStep = s;
+              break;
+            }
+          }
+          selectedStep ??= steps.isNotEmpty ? steps.first : null;
+
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: Column(
@@ -78,7 +92,33 @@ class _MappingActivityDetailPageState extends State<MappingActivityDetailPage> {
               children: [
                 _DetailHeader(activity: activity),
                 const SizedBox(height: 24),
-                const _WorkflowStepsPlaceholder(),
+                AppCard(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Flow',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      WorkflowStepList(
+                        steps: steps,
+                        selectedStepId: selectedId,
+                        onStepSelected: (id) =>
+                            setState(() => _selectedStepId = id),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                if (selectedStep != null)
+                  _StepContentPlaceholder(
+                    stepId: selectedStep.id,
+                    stepTitle: selectedStep.title,
+                  ),
               ],
             ),
           );
@@ -163,8 +203,15 @@ class _StatusChip extends StatelessWidget {
   }
 }
 
-class _WorkflowStepsPlaceholder extends StatelessWidget {
-  const _WorkflowStepsPlaceholder();
+/// Placeholder for step-specific content. Replace with real step content in TODOs 9–14.
+class _StepContentPlaceholder extends StatelessWidget {
+  const _StepContentPlaceholder({
+    required this.stepId,
+    required this.stepTitle,
+  });
+
+  final String stepId;
+  final String stepTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -173,32 +220,23 @@ class _WorkflowStepsPlaceholder extends StatelessWidget {
     return AppCard(
       child: Padding(
         padding: const EdgeInsets.all(24),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.account_tree_outlined,
-                size: 48,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              stepTitle,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
               ),
-              const SizedBox(height: 12),
-              Text(
-                'Workflow steps will appear here',
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Content for this step will be implemented in the next tasks.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Activity Details → Basemap → Site Visit → Sample Analysis → Map & Report → Preserve',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
