@@ -6,13 +6,14 @@ import 'api_interceptor.dart';
 /// Centralized Dio HTTP client.
 class ApiClient {
   late final Dio _dio;
+  final AppConfig _config;
 
   ApiClient({
-    AppConfig config = kDefaultAppConfig,
-  }) {
+    AppConfig? config,
+  }) : _config = config ?? kDefaultAppConfig {
     _dio = Dio(
       BaseOptions(
-        baseUrl: config.apiBaseUrl,
+        baseUrl: _config.apiBaseUrl,
         connectTimeout: const Duration(seconds: 30),
         receiveTimeout: const Duration(seconds: 30),
         headers: const {

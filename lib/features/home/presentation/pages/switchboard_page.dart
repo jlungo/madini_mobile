@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/config/module_config.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
@@ -14,7 +15,12 @@ class SwitchboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
+      showBackButton: false,
       actions: [
+        IconButton(
+          icon: const Icon(Icons.person),
+          onPressed: () => context.go('/profile'),
+        ),
         IconButton(
           icon: const Icon(Icons.logout),
           onPressed: () => context.read<AuthProvider>().logout(),
@@ -24,7 +30,7 @@ class SwitchboardPage extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: ListView.separated(
           itemCount: kModules.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 16),
+          separatorBuilder: (_, _) => const SizedBox(height: 16),
           itemBuilder: (context, index) {
             final module = kModules[index];
             

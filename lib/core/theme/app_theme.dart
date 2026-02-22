@@ -1,26 +1,57 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+/// For card content: dark text on light cards in dark theme.
+@immutable
+class AppThemeExtension extends ThemeExtension<AppThemeExtension> {
+  final Color onCard;
+  final Color onCardMuted;
+
+  const AppThemeExtension({
+    required this.onCard,
+    required this.onCardMuted,
+  });
+
+  @override
+  AppThemeExtension copyWith({Color? onCard, Color? onCardMuted}) {
+    return AppThemeExtension(
+      onCard: onCard ?? this.onCard,
+      onCardMuted: onCardMuted ?? this.onCardMuted,
+    );
+  }
+
+  @override
+  AppThemeExtension lerp(ThemeExtension<AppThemeExtension>? other, double t) {
+    if (other is! AppThemeExtension) return this;
+    return AppThemeExtension(
+      onCard: Color.lerp(onCard, other.onCard, t)!,
+      onCardMuted: Color.lerp(onCardMuted, other.onCardMuted, t)!,
+    );
+  }
+}
+
+/// Matches madini_webapp globals.css (light + dark).
 class AppTheme {
-  // Derived from web `globals.css` tokens
-  // --primary: hsl(40, 67%, 31%);
-  static const Color primary = Color(0xFF8B4513);
-  static const Color primaryForegroundLight = Color(0xFFFAFAFA);
+  // Webapp :root / .dark --primary: hsl(40, 67%, 31%); --primary-foreground: hsl(0, 0%, 98%);
+  static const Color primary = Color(0xFF7A5C1F);
+  static const Color primaryForeground = Color(0xFFFAFAFA);
 
-  // Light theme tokens (oklch approximations)
+  // Light (:root) – background/card white, foreground dark
   static const Color backgroundLight = Color(0xFFFFFFFF);
-  static const Color foregroundLight = Color(0xFF111827);
-  static const Color secondaryLight = Color(0xFFF3F4F6);
-  static const Color secondaryForegroundLight = Color(0xFF111827);
+  static const Color foregroundLight = Color(0xFF252525);
+  static const Color cardLight = Color(0xFFFFFFFF);
+  static const Color secondaryLight = Color(0xFFF7F7F7);
+  static const Color secondaryForegroundLight = Color(0xFF343434);
 
-  // Dark theme tokens
-  static const Color backgroundDark = Color(0xFF020617);
-  static const Color foregroundDark = Color(0xFFF9FAFB);
-  static const Color secondaryDark = Color(0xFF1F2937);
-  static const Color secondaryForegroundDark = Color(0xFFF9FAFB);
+  // Dark (.dark) – charcoal background, light cards (GST Field App / left design)
+  static const Color backgroundDark = Color(0xFF2B2B2B);
+  static const Color foregroundDark = Color(0xFFFBFBFB);
+  static const Color cardDark = Color(0xFFF0F0F0);
+  static const Color cardForegroundDark = Color(0xFF252525);
+  static const Color secondaryDark = Color(0xFF454545);
+  static const Color secondaryForegroundDark = Color(0xFFFBFBFB);
 
-  // Destructive maps to accentRed in mobile for now.
-  static const Color accentRed = Color(0xFFee4742);
+  static const Color accentRed = Color(0xFFE64A4A);
 
   static ThemeData light() {
     final colorScheme = ColorScheme.fromSeed(
@@ -32,18 +63,21 @@ class AppTheme {
     ).copyWith(
       surface: backgroundLight,
       onSurface: foregroundLight,
-      onPrimary: primaryForegroundLight,
+      onPrimary: primaryForeground,
       onSecondary: secondaryForegroundLight,
+      surfaceContainerLowest: cardLight,
     );
 
     final base = ThemeData.light(useMaterial3: true).copyWith(
       colorScheme: colorScheme,
+      scaffoldBackgroundColor: backgroundLight,
       inputDecorationTheme: const InputDecorationTheme(
         border: OutlineInputBorder(),
       ),
-      cardTheme: const CardThemeData(
+      cardTheme: CardThemeData(
         elevation: 0,
-        shape: RoundedRectangleBorder(
+        color: cardLight,
+        shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(10)),
         ),
       ),
@@ -92,6 +126,12 @@ class AppTheme {
     return base.copyWith(
       textTheme: reduced,
       primaryTextTheme: reduced,
+      extensions: [
+        const AppThemeExtension(
+          onCard: foregroundLight,
+          onCardMuted: Color(0xFF55606A),
+        ),
+      ],
     );
   }
 
@@ -105,18 +145,21 @@ class AppTheme {
     ).copyWith(
       surface: backgroundDark,
       onSurface: foregroundDark,
-      onPrimary: primaryForegroundLight,
+      onPrimary: primaryForeground,
       onSecondary: secondaryForegroundDark,
+      surfaceContainerLowest: cardDark,
     );
 
     final base = ThemeData.dark(useMaterial3: true).copyWith(
       colorScheme: colorScheme,
+      scaffoldBackgroundColor: backgroundDark,
       inputDecorationTheme: const InputDecorationTheme(
         border: OutlineInputBorder(),
       ),
-      cardTheme: const CardThemeData(
+      cardTheme: CardThemeData(
         elevation: 0,
-        shape: RoundedRectangleBorder(
+        color: cardDark,
+        shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(10)),
         ),
       ),
@@ -126,6 +169,12 @@ class AppTheme {
     return base.copyWith(
       textTheme: jakarta,
       primaryTextTheme: jakarta,
+      extensions: [
+        const AppThemeExtension(
+          onCard: cardForegroundDark,
+          onCardMuted: Color(0xFF505050),
+        ),
+      ],
     );
   }
 }
