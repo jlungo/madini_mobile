@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/config/module_config.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
+import '../../../../core/security/permissions.dart';
 import '../../../../shared/widgets/permission_guard.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../widgets/module_card.dart';
@@ -37,7 +38,7 @@ class SwitchboardPage extends StatelessWidget {
             // Example of using PermissionGuard for specific modules
             if (module.id == 'laboratory') {
               return PermissionGuard.single(
-                permission: 'lab:view',
+                permission: LabPermissions.sampleList,
                 child: ModuleCard(module: module),
               );
             }

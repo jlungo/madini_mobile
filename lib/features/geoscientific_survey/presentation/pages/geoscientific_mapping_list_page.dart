@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/security/permissions.dart';
+import '../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../../../shared/widgets/app_button.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../domain/entities/mapping_activity_entity.dart';
+import '../../domain/ownership_policy.dart';
 import '../controllers/mapping_activity_controller.dart';
 
 class GeoscientificMappingListPage extends StatefulWidget {
@@ -109,6 +112,13 @@ class _GeoscientificMappingListPageState
   }
 
   Widget _buildContent(BuildContext context, ThemeData theme) {
+    final user = context.watch<AuthProvider>().user;
+    final ownershipPolicy = kDefaultMappingActivityOwnershipPolicy;
+    final canCreate = user != null &&
+        user.hasAnyPermission([GeosurveyPermissions.mappingActivityCreate]);
+    final canDelete = user != null &&
+        user.hasAnyPermission([GeosurveyPermissions.mappingActivityDeleteAny]);
+
     return Consumer<MappingActivityController>(
         builder: (context, ctrl, _) {
           final filtered = _filter(ctrl.activities, _searchQuery);
@@ -168,31 +178,33 @@ class _GeoscientificMappingListPageState
                   ),
                 ),
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    const Spacer(),
-                    AppButton(
-                      onPressed: ctrl.isLoading
-                          ? null
-                          : () => context.push('/geoscientific-survey/mapping/new'),
-                      variant: AppButtonVariant.primary,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.add, size: 18),
-                          const SizedBox(width: 8),
-                          Text(
-                            'New Mapping Activity',
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              color: theme.colorScheme.onPrimary,
-                              fontWeight: FontWeight.w600,
+                if (canCreate)
+                  Row(
+                    children: [
+                      const Spacer(),
+                      AppButton(
+                        onPressed: ctrl.isLoading
+                            ? null
+                            : () => context.push('/geoscientific-survey/mapping/new'),
+                        variant: AppButtonVariant.primary,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.add, size: 18),
+                            const SizedBox(width: 8),
+                            Text(
+                              'New Mapping Activity',
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: theme.colorScheme.onPrimary,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                if (canCreate) const SizedBox(height: 16),
                 const SizedBox(height: 16),
                 AppCard(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -254,9 +266,32 @@ class _GeoscientificMappingListPageState
                                   const SizedBox(height: 12),
                               itemBuilder: (context, index) {
                                 final a = filtered[index];
+                                final canViewThis = user != null &&
+                                    canActOnMappingActivity(
+                                      user,
+                                      a,
+                                      ownershipPolicy,
+                                      anyPermission:
+                                          GeosurveyPermissions.mappingActivityViewAny,
+                                      ownPermission:
+                                          GeosurveyPermissions.mappingActivityViewOwn,
+                                    );
+                                final canEditThis = user != null &&
+                                    canActOnMappingActivity(
+                                      user,
+                                      a,
+                                      ownershipPolicy,
+                                      anyPermission:
+                                          GeosurveyPermissions.mappingActivityUpdateAny,
+                                      ownPermission:
+                                          GeosurveyPermissions.mappingActivityUpdateOwn,
+                                    );
                                 return _MappingActivityCard(
                                   activity: a,
                                   isFromEoffice: _isFromEoffice(a),
+                                  canView: canViewThis,
+                                  canEdit: canEditThis,
+                                  canDelete: canDelete,
                                   onView: () => context.push(
                                     '/geoscientific-survey/mapping-activity/${a.id}',
                                   ),
@@ -302,6 +337,9 @@ class _MappingActivityCard extends StatelessWidget {
   const _MappingActivityCard({
     required this.activity,
     required this.isFromEoffice,
+    required this.canView,
+    required this.canEdit,
+    required this.canDelete,
     required this.onView,
     required this.onEdit,
     required this.onDelete,
@@ -310,6 +348,9 @@ class _MappingActivityCard extends StatelessWidget {
 
   final MappingActivityEntity activity;
   final bool isFromEoffice;
+  final bool canView;
+  final bool canEdit;
+  final bool canDelete;
   final VoidCallback onView;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -382,23 +423,26 @@ class _MappingActivityCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              TextButton.icon(
-                onPressed: isLoading ? null : onView,
-                icon: const Icon(Icons.visibility_outlined, size: 18),
-                label: const Text('View'),
-              ),
-              TextButton.icon(
-                onPressed: isLoading ? null : onEdit,
-                icon: const Icon(Icons.edit_outlined, size: 18),
-                label: const Text('Edit'),
-              ),
-              TextButton.icon(
-                onPressed: isLoading ? null : onDelete,
-                icon: Icon(Icons.delete_outline, size: 18,
-                    color: theme.colorScheme.error),
-                label: Text('Delete',
-                    style: TextStyle(color: theme.colorScheme.error)),
-              ),
+              if (canView)
+                TextButton.icon(
+                  onPressed: isLoading ? null : onView,
+                  icon: const Icon(Icons.visibility_outlined, size: 18),
+                  label: const Text('View'),
+                ),
+              if (canEdit)
+                TextButton.icon(
+                  onPressed: isLoading ? null : onEdit,
+                  icon: const Icon(Icons.edit_outlined, size: 18),
+                  label: const Text('Edit'),
+                ),
+              if (canDelete)
+                TextButton.icon(
+                  onPressed: isLoading ? null : onDelete,
+                  icon: Icon(Icons.delete_outline, size: 18,
+                      color: theme.colorScheme.error),
+                  label: Text('Delete',
+                      style: TextStyle(color: theme.colorScheme.error)),
+                ),
             ],
           ),
         ],

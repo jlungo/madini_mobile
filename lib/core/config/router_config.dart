@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/security/permissions.dart';
 import '../../shared/widgets/app_scaffold.dart';
+import '../../shared/widgets/permission_page_guard.dart';
 import '../../features/auth/presentation/pages/login_screen.dart';
 import '../../features/auth/presentation/pages/profile_page.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
@@ -83,55 +85,74 @@ GoRouter appRouter(AuthProvider authProvider) => GoRouter(
         GoRoute(
           path: '/geoscientific-survey/mapping-activity',
           name: 'geoscientific-mapping-activity',
-          builder: (context, state) =>
-              const GeoscientificMappingListPage(useScaffold: false),
+          builder: (context, state) => PermissionPageGuard(
+            requiredAnyPermissions: [GeosurveyPermissions.mappingActivityList],
+            child: const GeoscientificMappingListPage(useScaffold: false),
+          ),
         ),
         GoRoute(
           path: '/geoscientific-survey/deposits',
           name: 'geosurvey-deposits',
-          builder: (context, state) =>
-              const GeosurveyPlaceholderPage(title: 'Deposits'),
+          builder: (context, state) => PermissionPageGuard(
+            requiredAnyPermissions: [GeosurveyPermissions.depositList],
+            child: const GeosurveyPlaceholderPage(title: 'Deposits'),
+          ),
         ),
         GoRoute(
           path: '/geoscientific-survey/mines',
           name: 'geosurvey-mines',
-          builder: (context, state) =>
-              const GeosurveyPlaceholderPage(title: 'Mines'),
+          builder: (context, state) => PermissionPageGuard(
+            requiredAnyPermissions: [GeosurveyPermissions.mineList],
+            child: const GeosurveyPlaceholderPage(title: 'Mines'),
+          ),
         ),
         GoRoute(
           path: '/geoscientific-survey/drill-holes',
           name: 'geosurvey-drill-holes',
-          builder: (context, state) =>
-              const GeosurveyPlaceholderPage(title: 'Drill Holes'),
+          builder: (context, state) => PermissionPageGuard(
+            requiredAnyPermissions: [GeosurveyPermissions.drillHoleList],
+            child: const GeosurveyPlaceholderPage(title: 'Drill Holes'),
+          ),
         ),
         GoRoute(
           path: '/geoscientific-survey/geochemistry',
           name: 'geosurvey-geochemistry',
-          builder: (context, state) =>
-              const GeosurveyPlaceholderPage(title: 'Geochemistry'),
+          builder: (context, state) => PermissionPageGuard(
+            requiredAnyPermissions: [GeosurveyPermissions.geochemistryList],
+            child: const GeosurveyPlaceholderPage(title: 'Geochemistry'),
+          ),
         ),
         GoRoute(
           path: '/geoscientific-survey/map-viewer',
           name: 'geosurvey-map-viewer',
-          builder: (context, state) => const MapViewerPlaceholderPage(),
+          builder: (context, state) => PermissionPageGuard(
+            requiredAnyPermissions: [GeosurveyPermissions.mapViewerView],
+            child: const MapViewerPlaceholderPage(),
+          ),
         ),
         GoRoute(
           path: '/geoscientific-survey/data',
           name: 'geosurvey-data',
-          builder: (context, state) =>
-              const GeosurveyPlaceholderPage(title: 'Data'),
+          builder: (context, state) => PermissionPageGuard(
+            requiredAnyPermissions: [GeosurveyPermissions.geochemistryList],
+            child: const GeosurveyPlaceholderPage(title: 'Data'),
+          ),
         ),
         GoRoute(
           path: '/geoscientific-survey/reports',
           name: 'geosurvey-reports',
-          builder: (context, state) =>
-              const GeosurveyPlaceholderPage(title: 'Reports'),
+          builder: (context, state) => PermissionPageGuard(
+            requiredAnyPermissions: [GeosurveyPermissions.reportList],
+            child: const GeosurveyPlaceholderPage(title: 'Reports'),
+          ),
         ),
         GoRoute(
           path: '/geoscientific-survey/locations',
           name: 'geosurvey-locations',
-          builder: (context, state) =>
-              const GeosurveyPlaceholderPage(title: 'Locations'),
+          builder: (context, state) => PermissionPageGuard(
+            requiredAnyPermissions: [GeosurveyPermissions.locationList],
+            child: const GeosurveyPlaceholderPage(title: 'Locations'),
+          ),
         ),
       ],
     ),
@@ -141,20 +162,29 @@ GoRouter appRouter(AuthProvider authProvider) => GoRouter(
     GoRoute(
       path: '/geoscientific-survey/mapping/new',
       name: 'geoscientific-mapping-new',
-      builder: (context, state) => const GeoscientificMappingCreatePage(),
+      builder: (context, state) => PermissionPageGuard(
+        requiredAnyPermissions: [GeosurveyPermissions.mappingActivityCreate],
+        child: const GeoscientificMappingCreatePage(),
+      ),
     ),
     GoRoute(
       path: '/geoscientific-survey/mapping-activity/:id',
       name: 'geoscientific-mapping-detail',
-      builder: (context, state) => MappingActivityDetailPage(
-        activityId: state.pathParameters['id'] ?? '',
+      builder: (context, state) => PermissionPageGuard(
+        requiredAnyPermissions: GeosurveyPermissions.mappingActivityView,
+        child: MappingActivityDetailPage(
+          activityId: state.pathParameters['id'] ?? '',
+        ),
       ),
     ),
     GoRoute(
       path: '/geoscientific-survey/mapping/:id/edit',
       name: 'geoscientific-mapping-edit',
-      builder: (context, state) => GeoscientificMappingEditPage(
-        activityId: state.pathParameters['id'] ?? '',
+      builder: (context, state) => PermissionPageGuard(
+        requiredAnyPermissions: GeosurveyPermissions.mappingActivityUpdate,
+        child: GeoscientificMappingEditPage(
+          activityId: state.pathParameters['id'] ?? '',
+        ),
       ),
     ),
   ],
