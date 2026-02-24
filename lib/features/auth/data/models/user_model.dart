@@ -13,10 +13,7 @@ class UserModel extends User {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
-    final roles = (json['realm_access']?['roles'] as List<dynamic>?)
-            ?.map((e) => e.toString())
-            .toList() ??
-        [];
+    final roles = _collectRoles(json);
     final fromToken =
         (json['permissions'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [];
     final permissions = PermissionResolver.resolve(
@@ -32,6 +29,30 @@ class UserModel extends User {
       roles: roles,
       permissions: permissions,
     );
+  }
+
+  /// Collects role names (and permission-like strings) from token payload.
+  /// Reads realm_access.roles, top-level "roles", and resource_access.<client>.roles
+  /// so backend can send roles in any of these.
+  static List<String> _collectRoles(Map<String, dynamic> json) {
+    final list = <String>[];
+    final realmRoles = json['realm_access']?['roles'] as List<dynamic>?;
+    if (realmRoles != null) {
+      list.addAll(realmRoles.map((e) => e.toString()));
+    }
+    final topRoles = json['roles'] as List<dynamic>?;
+    if (topRoles != null) {
+      list.addAll(topRoles.map((e) => e.toString()));
+    }
+    final resourceAccess = json['resource_access'] as Map<String, dynamic>?;
+    if (resourceAccess != null) {
+      for (final clientRoles in resourceAccess.values) {
+        if (clientRoles is Map && clientRoles['roles'] is List) {
+          list.addAll((clientRoles['roles'] as List).map((e) => e.toString()));
+        }
+      }
+    }
+    return list;
   }
 
   Map<String, dynamic> toJson() {

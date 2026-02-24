@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../core/security/permissions.dart';
 import '../../../../shared/widgets/permission_guard.dart';
 import '../../domain/entities/mapping_activity_entity.dart';
 
@@ -17,7 +18,7 @@ class StepContentMapReport extends StatefulWidget {
     this.onSubmitToCartographers,
     this.onFinalizeDraft,
     this.isSubmitting = false,
-    this.draftActionPermission = 'survey:fieldwork:view',
+    this.draftActionPermission = GeosurveyPermissions.reportCreate,
   });
 
   final MappingActivityEntity activity;

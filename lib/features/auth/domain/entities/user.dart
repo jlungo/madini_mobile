@@ -1,3 +1,6 @@
+/// Super-admin permission string: grants all permissions.
+const String kSuperAdminPermission = '*:*:*:any';
+
 class User {
   final String id;
   final String username;
@@ -17,24 +20,24 @@ class User {
     required this.permissions,
   });
 
+  /// True when this user is super admin (admin role or *:*:*:any permission).
+  bool get isSuperAdmin =>
+      roles.any((r) => r.toLowerCase() == 'admin') ||
+      permissions.contains('*') ||
+      permissions.contains(kSuperAdminPermission);
+
   bool hasPermission(String permission) {
-    if (permissions.contains('*') || permissions.contains('*:*:*:any')) {
-       return true;
-    }
+    if (isSuperAdmin) return true;
     return permissions.contains(permission);
   }
 
   bool hasAnyPermission(List<String> requiredPermissions) {
-     if (permissions.contains('*') || permissions.contains('*:*:*:any')) {
-       return true;
-    }
+    if (isSuperAdmin) return true;
     return requiredPermissions.any((p) => permissions.contains(p));
   }
 
   bool hasAllPermissions(List<String> requiredPermissions) {
-     if (permissions.contains('*') || permissions.contains('*:*:*:any')) {
-       return true;
-    }
+    if (isSuperAdmin) return true;
     return requiredPermissions.every((p) => permissions.contains(p));
   }
 }
