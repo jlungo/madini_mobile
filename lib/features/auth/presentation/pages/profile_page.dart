@@ -24,11 +24,17 @@ class ProfilePage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _Section(title: 'Account', children: [
-            _Row(label: 'Name', value: '${user.firstName} ${user.lastName}'.trim()),
-            _Row(label: 'Email', value: user.email),
-            _Row(label: 'Username', value: user.username),
-          ]),
+          _Section(
+            title: 'Account',
+            children: [
+              _Row(
+                label: 'Name',
+                value: '${user.firstName} ${user.lastName}'.trim(),
+              ),
+              _Row(label: 'Email', value: user.email),
+              _Row(label: 'Username', value: user.username),
+            ],
+          ),
           if (user.roles.isNotEmpty) ...[
             const SizedBox(height: 16),
             _Section(
@@ -49,7 +55,11 @@ class ProfilePage extends StatelessWidget {
                 runSpacing: 4,
                 children: user.permissions
                     .take(20)
-                    .map((p) => Chip(label: Text(p, style: const TextStyle(fontSize: 11))))
+                    .map(
+                      (p) => Chip(
+                        label: Text(p, style: const TextStyle(fontSize: 11)),
+                      ),
+                    )
                     .toList(),
               ),
             ),
@@ -96,12 +106,12 @@ class _Section extends StatelessWidget {
         Text(
           title,
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
-              ),
+            color: Theme.of(context).colorScheme.primary,
+          ),
         ),
         const SizedBox(height: 8),
         if (children != null) ...children!,
-        if (child != null) child!,
+        ?child,
       ],
     );
   }
@@ -122,7 +132,10 @@ class _Row extends StatelessWidget {
         children: [
           SizedBox(
             width: 100,
-            child: Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
           ),
           Expanded(child: Text(value)),
         ],
