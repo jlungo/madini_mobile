@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/security/permissions.dart';
+import '../../../../features/auth/presentation/providers/auth_provider.dart';
 import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/app_scaffold.dart';
 import '../../domain/entities/mapping_activity_entity.dart';
+import '../../domain/ownership_policy.dart';
 import '../controllers/mapping_activity_controller.dart';
 import '../widgets/step_content_activity_details.dart';
 import '../widgets/step_content_basemap.dart';
@@ -43,63 +46,89 @@ class _MappingActivityDetailPageState extends State<MappingActivityDetailPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final user = context.watch<AuthProvider>().user;
 
-    return AppScaffold(
-      title: 'Mapping Activity',
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.edit_outlined),
-          onPressed: () => context.push(
-            '/geoscientific-survey/mapping/${widget.activityId}/edit',
+    return Consumer<MappingActivityController>(
+      builder: (context, ctrl, _) {
+        final activity = ctrl.selectedActivity;
+        final canUpdate = user != null &&
+            activity != null &&
+            activity.id == widget.activityId &&
+            canActOnMappingActivity(
+              user,
+              activity,
+              kDefaultMappingActivityOwnershipPolicy,
+              anyPermission: GeosurveyPermissions.mappingActivityUpdateAny,
+              ownPermission: GeosurveyPermissions.mappingActivityUpdateOwn,
+            );
+        return AppScaffold(
+          title: 'Mapping Activity',
+          actions: canUpdate
+              ? [
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined),
+                    onPressed: () => context.push(
+                      '/geoscientific-survey/mapping/${widget.activityId}/edit',
+                    ),
+                  ),
+                ]
+              : null,
+          body: _buildBody(context, theme, ctrl, activity, canUpdate),
+        );
+      },
+    );
+  }
+
+  Widget _buildBody(
+    BuildContext context,
+    ThemeData theme,
+    MappingActivityController ctrl,
+    MappingActivityEntity? activity,
+    bool canUpdate,
+  ) {
+    if (ctrl.isLoading && ctrl.selectedActivity == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (activity == null || activity.id != widget.activityId) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Activity not found',
+                style: theme.textTheme.titleMedium,
+              ),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: () => context.pop(),
+                child: const Text('Back'),
+              ),
+            ],
           ),
         ),
-      ],
-      body: Consumer<MappingActivityController>(
-        builder: (context, ctrl, _) {
-          if (ctrl.isLoading && ctrl.selectedActivity == null) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      );
+    }
 
-          final activity = ctrl.selectedActivity;
-          if (activity == null || activity.id != widget.activityId) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Activity not found',
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: () => context.pop(),
-                      child: const Text('Back'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
+    final steps = buildWorkflowSteps(activity);
+    final selectedId = _selectedStepId ?? (steps.isNotEmpty ? steps.first.id : '');
+    WorkflowStep? selectedStep;
+    for (final s in steps) {
+      if (s.id == selectedId) {
+        selectedStep = s;
+        break;
+      }
+    }
+    selectedStep ??= steps.isNotEmpty ? steps.first : null;
 
-          final steps = buildWorkflowSteps(activity);
-          final selectedId = _selectedStepId ?? (steps.isNotEmpty ? steps.first.id : '');
-          WorkflowStep? selectedStep;
-          for (final s in steps) {
-            if (s.id == selectedId) {
-              selectedStep = s;
-              break;
-            }
-          }
-          selectedStep ??= steps.isNotEmpty ? steps.first : null;
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _DetailHeader(activity: activity),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _DetailHeader(activity: activity, canEdit: canUpdate),
                 const SizedBox(height: 24),
                 AppCard(
                   padding: const EdgeInsets.all(16),
@@ -125,10 +154,7 @@ class _MappingActivityDetailPageState extends State<MappingActivityDetailPage> {
                 const SizedBox(height: 24),
                 if (selectedStep != null)
                   _buildStepContent(context, activity, selectedStep, ctrl),
-              ],
-            ),
-          );
-        },
+        ],
       ),
     );
   }
@@ -221,9 +247,10 @@ class _MappingActivityDetailPageState extends State<MappingActivityDetailPage> {
 }
 
 class _DetailHeader extends StatelessWidget {
-  const _DetailHeader({required this.activity});
+  const _DetailHeader({required this.activity, required this.canEdit});
 
   final MappingActivityEntity activity;
+  final bool canEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -249,14 +276,16 @@ class _DetailHeader extends StatelessWidget {
         Row(
           children: [
             _StatusChip(status: activity.status),
-            const SizedBox(width: 12),
-            FilledButton.icon(
-              onPressed: () => context.push(
-                '/geoscientific-survey/mapping/${activity.id}/edit',
+            if (canEdit) ...[
+              const SizedBox(width: 12),
+              FilledButton.icon(
+                onPressed: () => context.push(
+                  '/geoscientific-survey/mapping/${activity.id}/edit',
+                ),
+                icon: const Icon(Icons.edit_outlined, size: 18),
+                label: const Text('Edit'),
               ),
-              icon: const Icon(Icons.edit_outlined, size: 18),
-              label: const Text('Edit'),
-            ),
+            ],
           ],
         ),
       ],

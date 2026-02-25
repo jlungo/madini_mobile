@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../shared/widgets/app_card.dart';
+import '../../../../core/security/permissions.dart';
 import '../../../../shared/widgets/permission_guard.dart';
 import '../../domain/entities/mapping_activity_entity.dart';
 
@@ -77,7 +78,7 @@ class StepContentSampleAnalysis extends StatefulWidget {
     this.onSubmitRequest,
     this.onRequestReExamination,
     this.onSubmitToOtherLab,
-    this.labActionPermission = 'lab:sample:view',
+    this.labActionPermission = LabPermissions.sampleViewAny,
   });
 
   final MappingActivityEntity activity;
