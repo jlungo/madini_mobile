@@ -18,6 +18,9 @@ import '../../features/geoscientific_survey/presentation/pages/geosurvey_shell_p
 import '../../features/geoscientific_survey/presentation/pages/map_viewer_placeholder_page.dart';
 import '../../features/geoscientific_survey/presentation/pages/mapping_activity_detail_page.dart';
 import '../../features/geoscientific_survey/presentation/pages/geoscientific_mapping_edit_page.dart';
+import '../../features/geoscientific_survey/presentation/pages/deposit_list_page.dart';
+import '../../features/geoscientific_survey/presentation/pages/deposit_detail_page.dart';
+import '../../features/geoscientific_survey/presentation/pages/deposit_form_page.dart';
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -95,7 +98,7 @@ GoRouter appRouter(AuthProvider authProvider) => GoRouter(
           name: 'geosurvey-deposits',
           builder: (context, state) => PermissionPageGuard(
             requiredAnyPermissions: [GeosurveyPermissions.depositList],
-            child: const GeosurveyPlaceholderPage(title: 'Deposits'),
+            child: const DepositListPage(useScaffold: false),
           ),
         ),
         GoRoute(
@@ -184,6 +187,35 @@ GoRouter appRouter(AuthProvider authProvider) => GoRouter(
         requiredAnyPermissions: GeosurveyPermissions.mappingActivityUpdate,
         child: GeoscientificMappingEditPage(
           activityId: state.pathParameters['id'] ?? '',
+        ),
+      ),
+    ),
+    // ── Deposits full-screen routes ──────────────────────────────────────────
+    GoRoute(
+      path: '/geoscientific-survey/deposits/new',
+      name: 'geosurvey-deposits-new',
+      builder: (context, state) => PermissionPageGuard(
+        requiredAnyPermissions: [GeosurveyPermissions.depositCreate],
+        child: const DepositFormPage(),
+      ),
+    ),
+    GoRoute(
+      path: '/geoscientific-survey/deposits/:id',
+      name: 'geosurvey-deposits-detail',
+      builder: (context, state) => PermissionPageGuard(
+        requiredAnyPermissions: GeosurveyPermissions.depositView,
+        child: DepositDetailPage(
+          depositId: state.pathParameters['id'] ?? '',
+        ),
+      ),
+    ),
+    GoRoute(
+      path: '/geoscientific-survey/deposits/:id/edit',
+      name: 'geosurvey-deposits-edit',
+      builder: (context, state) => PermissionPageGuard(
+        requiredAnyPermissions: GeosurveyPermissions.depositUpdate,
+        child: DepositFormPage(
+          depositId: state.pathParameters['id'] ?? '',
         ),
       ),
     ),

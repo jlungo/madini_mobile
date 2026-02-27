@@ -5,6 +5,8 @@
 // ---------------------------------------------------------------------------
 
 /// Super-admin: grants all permissions.
+library;
+
 const String kPermissionWildcard = '*:*:*:any';
 
 // ---------------------------------------------------------------------------
@@ -18,21 +20,52 @@ abstract final class GeosurveyPermissions {
 
   // --- mapping-activity ---
   static const String mappingActivityList = '$_module:mapping-activity:list';
-  static const String mappingActivityViewAny = '$_module:mapping-activity:view:any';
-  static const String mappingActivityViewOwn = '$_module:mapping-activity:view:own';
-  static const String mappingActivityCreate = '$_module:mapping-activity:create';
-  static const String mappingActivityUpdateAny = '$_module:mapping-activity:update:any';
-  static const String mappingActivityUpdateOwn = '$_module:mapping-activity:update:own';
-  static const String mappingActivityDeleteAny = '$_module:mapping-activity:delete:any';
+  static const String mappingActivityViewAny =
+      '$_module:mapping-activity:view:any';
+  static const String mappingActivityViewOwn =
+      '$_module:mapping-activity:view:own';
+  static const String mappingActivityCreate =
+      '$_module:mapping-activity:create';
+  static const String mappingActivityUpdateAny =
+      '$_module:mapping-activity:update:any';
+  static const String mappingActivityUpdateOwn =
+      '$_module:mapping-activity:update:own';
+  static const String mappingActivityDeleteAny =
+      '$_module:mapping-activity:delete:any';
 
   /// For guards that accept either view:any or view:own.
-  static const List<String> mappingActivityView = [mappingActivityViewAny, mappingActivityViewOwn];
+  static const List<String> mappingActivityView = [
+    mappingActivityViewAny,
+    mappingActivityViewOwn,
+  ];
 
   /// For guards that accept either update:any or update:own.
-  static const List<String> mappingActivityUpdate = [mappingActivityUpdateAny, mappingActivityUpdateOwn];
+  static const List<String> mappingActivityUpdate = [
+    mappingActivityUpdateAny,
+    mappingActivityUpdateOwn,
+  ];
 
   // --- drawer sections (list / view) ---
   static const String depositList = '$_module:deposit:list';
+  static const String depositViewAny = '$_module:deposit:view:any';
+  static const String depositViewOwn = '$_module:deposit:view:own';
+  static const String depositCreate = '$_module:deposit:create';
+  static const String depositUpdateAny = '$_module:deposit:update:any';
+  static const String depositUpdateOwn = '$_module:deposit:update:own';
+  static const String depositDeleteAny = '$_module:deposit:delete:any';
+
+  /// For guards that accept either view:any or view:own.
+  static const List<String> depositView = [
+    depositViewAny,
+    depositViewOwn,
+  ];
+
+  /// For guards that accept either update:any or update:own.
+  static const List<String> depositUpdate = [
+    depositUpdateAny,
+    depositUpdateOwn,
+  ];
+
   static const String mineList = '$_module:mine:list';
   static const String drillHoleList = '$_module:drill-hole:list';
   static const String geochemistryList = '$_module:geochemistry:list';
